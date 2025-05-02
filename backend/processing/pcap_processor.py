@@ -49,6 +49,13 @@ class PCAPProcessor:
             raise FileNotFoundError(f"No se encontró el archivo PCAP: {pcap_file}")
             
         try:
+            # Registro adicional para depuración
+            print(f"\n===== INICIO PROCESAMIENTO DE PCAP =====")
+            print(f"Archivo: {pcap_file}")
+            print(f"Tamaño del archivo: {os.path.getsize(pcap_file) / 1024:.2f} KB")
+            print(f"Interfaz: {interface}")
+            print(f"Base de datos: {self.db_path}")
+            
             # Crear una sesión de captura en la base de datos
             db_session = self.Session()
             capture_session = CaptureSession(
@@ -61,23 +68,44 @@ class PCAPProcessor:
             db_session.add(capture_session)
             db_session.commit()
             
+            print(f"Sesión de captura creada con ID: {capture_session.id}")
+            
             # Cargar el archivo PCAP
+            print(f"Cargando archivo PCAP con pyshark...")
             cap = pyshark.FileCapture(pcap_file)
             
             # Procesar cada paquete
             packet_count = 0
+            skipped_packets = 0
+            error_packets = 0
+            
+            print(f"Comenzando procesamiento de paquetes...")
             for packet_number, packet in enumerate(cap, start=1):
                 try:
+                    # Registro adicional cada 1000 paquetes
+                    if packet_number % 1000 == 0:
+                        print(f"Procesando paquete #{packet_number}...")
+                    
+                    # Información del paquete para depuración (solo primeros paquetes)
+                    if packet_number <= 5:
+                        print(f"Paquete #{packet_number} - Capas disponibles: {[layer.layer_name for layer in packet.layers]}")
+                    
                     # Procesar el paquete solo si tiene capa IP
                     if hasattr(packet, 'ip') or hasattr(packet, 'ipv6'):
                         self._process_packet(db_session, capture_session, packet_number, packet)
                         packet_count += 1
+                    else:
+                        skipped_packets += 1
+                        if packet_number <= 10:  # Solo mostrar detalles para los primeros paquetes saltados
+                            print(f"Saltando paquete #{packet_number} - No tiene capa IP. Capas disponibles: {[layer.layer_name for layer in packet.layers]}")
                 except Exception as e:
+                    error_packets += 1
                     print(f"Error al procesar el paquete #{packet_number}: {e}")
                     
                 # Commit cada 1000 paquetes para evitar problemas de memoria
                 if packet_number % 1000 == 0:
                     db_session.commit()
+                    print(f"Commit realizado tras {packet_number} paquetes")
             
             # Actualizar el conteo de paquetes en la sesión
             capture_session.packet_count = packet_count
@@ -85,10 +113,38 @@ class PCAPProcessor:
             
             cap.close()
             
+            # Verificar registros en la base de datos
+            packet_count_db = db_session.query(Packet).filter(Packet.session_id == capture_session.id).count()
+            tcp_count = db_session.query(TCPInfo).join(Packet).filter(Packet.session_id == capture_session.id).count()
+            udp_count = db_session.query(UDPInfo).join(Packet).filter(Packet.session_id == capture_session.id).count()
+            icmp_count = db_session.query(ICMPInfo).join(Packet).filter(Packet.session_id == capture_session.id).count()
+            anomaly_count = db_session.query(Anomaly).join(Packet).filter(Packet.session_id == capture_session.id).count()
+            
+            # Resumen final
+            print(f"\n===== RESUMEN DEL PROCESAMIENTO =====")
+            print(f"Total de paquetes examinados: {packet_number if packet_number > 0 else 0}")
+            print(f"Paquetes procesados con éxito: {packet_count}")
+            print(f"Paquetes saltados (sin capa IP): {skipped_packets}")
+            print(f"Paquetes con errores: {error_packets}")
+            print(f"\nRegistros en la base de datos:")
+            print(f"- Paquetes: {packet_count_db}")
+            print(f"- TCP: {tcp_count}")
+            print(f"- UDP: {udp_count}")
+            print(f"- ICMP: {icmp_count}")
+            print(f"- Anomalías: {anomaly_count}")
+            
+            # Verificar tamaño de la base de datos después del procesamiento
+            db_size = os.path.getsize(self.db_path)
+            print(f"Tamaño de la base de datos después del procesamiento: {db_size / 1024:.2f} KB")
+            print(f"===== FIN PROCESAMIENTO DE PCAP =====\n")
+            
             return capture_session.id
             
         except Exception as e:
             db_session.rollback()
+            print(f"ERROR CRÍTICO durante el procesamiento: {e}")
+            import traceback
+            traceback.print_exc()
             raise e
             
         finally:

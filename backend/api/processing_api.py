@@ -1,153 +1,120 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form, BackgroundTasks
-from fastapi.responses import JSONResponse
-from typing import Optional, List, Dict, Any
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, BackgroundTasks, Query
+from typing import List, Optional
 import os
+import subprocess
+import datetime
+import uuid
 import shutil
-from datetime import datetime
-import time  # Import time module
+import concurrent.futures
+from pathlib import Path
+from starlette.responses import FileResponse
 
-# Cambiar imports relativos a absolutos
 from processing.pcap_processor import PCAPProcessor
 from database.models import init_db
+from capture.network_interfaces import get_interfaces  # Corregir la importación
 
 router = APIRouter(prefix="/api/processing", tags=["processing"])
 
-@router.post("/upload-pcap")
+# Directorio para almacenar los archivos PCAP
+PCAP_DIRECTORY = os.getenv('PCAP_DIRECTORY', './data/pcap_files')
+os.makedirs(PCAP_DIRECTORY, exist_ok=True)
+
+# Función para ejecutar en un proceso separado
+def process_pcap_in_separate_process(pcap_file, interface=None, filter_applied=None):
+    """
+    Procesa un archivo PCAP en un proceso separado para evitar conflictos con el bucle de eventos.
+    
+    Args:
+        pcap_file: Ruta al archivo PCAP
+        interface: Nombre de la interfaz de captura
+        filter_applied: Filtro utilizado durante la captura
+        
+    Returns:
+        str: Ruta a la base de datos generada
+    """
+    try:
+        processor = PCAPProcessor()
+        db_path = processor.db_path
+        processor.process_pcap_file(pcap_file, interface, filter_applied)
+        return db_path
+    except Exception as e:
+        print(f"Error en el procesamiento del archivo PCAP: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+@router.post("/upload-pcap/")
 async def upload_pcap_file(
-    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
-    process_now: bool = Form(False),
-    interface: Optional[str] = Form(None)
-) -> Dict[str, Any]:
+    process_immediately: bool = Form(True),
+    interface_index: Optional[str] = Form(None),
+    background_tasks: BackgroundTasks = None
+):
     """
     Sube un archivo PCAP y opcionalmente lo procesa.
+    
+    Args:
+        file: Archivo PCAP a subir
+        process_immediately: Si es True, procesa el archivo inmediatamente
+        interface_index: Índice de la interfaz de captura (opcional)
+        background_tasks: Tareas en segundo plano
+    
+    Returns:
+        dict: Información sobre el archivo subido y su procesamiento
     """
-    try:
-        # Verificar que es un archivo PCAP
-        if not file.filename.endswith(('.pcap', '.pcapng')):
-            raise HTTPException(status_code=400, detail="El archivo debe tener extensión .pcap o .pcapng")
-            
-        # Guardar el archivo en el directorio de PCAP
-        pcap_dir = os.getenv("PCAP_DIRECTORY", "./data/pcap_files/")
-        os.makedirs(pcap_dir, exist_ok=True)
-        
-        # Usar el nombre original del archivo
-        filename = file.filename
-        file_path = os.path.join(pcap_dir, filename)
-        
-        # Verificar si el archivo ya existe y rechazar la subida en ese caso
-        if os.path.exists(file_path):
-            raise HTTPException(
-                status_code=409, # Conflict - código HTTP adecuado para recursos duplicados
-                detail=f"Ya existe un archivo con el nombre '{filename}'."
-            )
-        
-        # Guardar el archivo
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        
-        response = {
-            "message": f"Archivo {filename} subido correctamente",
-            "file_path": file_path,
-            "file_name": filename
-        }
-        
-        # Procesar el archivo si se solicita
-        if process_now:
-            background_tasks.add_task(
-                process_pcap_file_task,
-                file_path=file_path,
-                interface=interface
-            )
-            response["processing"] = "Procesamiento iniciado en segundo plano"
-        
-        return response
-        
-    except HTTPException:
-        # Re-lanzar excepciones HTTP ya formateadas
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al procesar el archivo: {str(e)}")
-
-@router.post("/process-pcap")
-async def process_pcap(
-    background_tasks: BackgroundTasks,
-    file_path: str,
-    interface: Optional[str] = None
-) -> Dict[str, str]:
-    """
-    Procesa un archivo PCAP ya existente.
-    """
-    try:
-        # Verificar que el archivo existe
-        if not os.path.exists(file_path):
-            raise HTTPException(status_code=404, detail=f"Archivo no encontrado: {file_path}")
-            
-        # Iniciar procesamiento en segundo plano
-        background_tasks.add_task(
-            process_pcap_file_task,
-            file_path=file_path,
-            interface=interface
+    # Verificar que es un archivo PCAP
+    if not file.filename.lower().endswith('.pcap'):
+        raise HTTPException(status_code=400, detail="Solo se permiten archivos PCAP")
+    
+    # Comprobar si ya existe un archivo con el mismo nombre
+    if os.path.exists(os.path.join(PCAP_DIRECTORY, file.filename)):
+        raise HTTPException(
+            status_code=409,
+            detail=f"Ya existe un archivo con el nombre '{file.filename}'. Por favor, elige otro nombre."
         )
-        
-        return {
-            "message": "Procesamiento iniciado en segundo plano",
-            "file_path": file_path,
-            "file_name": os.path.basename(file_path)
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al iniciar procesamiento: {str(e)}")
-
-@router.get("/status")
-async def get_processing_status() -> Dict[str, Any]:
-    """
-    Obtiene el estado del procesamiento (a implementar en una fase posterior).
-    """
-    return {"message": "Estado de procesamiento no implementado aún"}
-
-# Función para ejecutar en segundo plano
-async def process_pcap_file_task(file_path: str, interface: Optional[str] = None):
-    """
-    Tarea en segundo plano para procesar un archivo PCAP.
-    """
-    start_time = time.time()  # Use time.time() for better precision
-    session_id = None
-    db_path_used = None  # Variable to store the actual db path used
-    try:
-        # Get the database path that will be used by the processor
-        # This relies on PCAPProcessor using the same logic (env var or default)
-        db_path_used = os.getenv('DATABASE_PATH', './data/db_files/network_analyzer.db')
-
-        # Ensure the directory exists (although PCAPProcessor might do this too)
-        os.makedirs(os.path.dirname(db_path_used), exist_ok=True)
-
-        # Initialize processor (it will use the db_path_used internally via its default logic)
-        processor = PCAPProcessor()
-
-        print(f"Procesando archivo: {file_path}")  # Log start
-
-        # Procesar el archivo
-        session_id = processor.process_pcap_file(
-            pcap_file=file_path,
-            interface=interface
-        )
-
-        end_time = time.time()
-        duration = end_time - start_time
-
-        # Updated success log message
-        print(f"✅ Procesamiento completado en {duration:.2f}s")
-        print(f"ID de sesión: {session_id}")
-        print(f"Base de datos: {db_path_used}")  # Explicitly state the DB file used
-
-    except FileNotFoundError:
-        print(f"❌ Error: Archivo no encontrado - {file_path}")
-    except Exception as e:
-        # Updated error log message
-        print(f"❌ Error en el procesamiento en segundo plano para '{os.path.basename(file_path)}': {e}")
-        # Consider adding traceback for debugging if needed:
-        # import traceback
-        # print(traceback.format_exc())
+    
+    # Guardar el archivo
+    file_path = os.path.join(PCAP_DIRECTORY, file.filename)
+    with open(file_path, "wb") as f:
+        shutil.copyfileobj(file.file, f)
+    
+    # Si se especifica un índice de interfaz, obtener el nombre de la interfaz
+    interface = None
+    if interface_index is not None:
+        try:
+            interfaces = get_interfaces()
+            if interfaces and len(interfaces) > int(interface_index):
+                interface = interfaces[int(interface_index)].get('name')
+        except Exception as e:
+            print(f"Error al obtener la interfaz: {e}")
+    
+    # Procesar el archivo si se solicita
+    db_path = None
+    if process_immediately:
+        try:
+            print(f"Procesando archivo: {file_path}")
+            
+            # Usar concurrent.futures para ejecutar en un proceso separado
+            with concurrent.futures.ProcessPoolExecutor() as executor:
+                future = executor.submit(
+                    process_pcap_in_separate_process,
+                    file_path,
+                    interface,
+                    None  # filter_applied
+                )
+                db_path = future.result()  # Esperar a que termine el procesamiento
+                
+            if not db_path:
+                print(f"⚠️ El procesamiento del archivo {file.filename} no generó una base de datos válida")
+        except Exception as e:
+            print(f"❌ Error al procesar el archivo {file.filename}: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    return {
+        "file_name": file.filename,
+        "file_path": file_path,
+        "size": os.path.getsize(file_path),
+        "processed": process_immediately and db_path is not None,
+        "db_path": db_path if db_path else None
+    }
