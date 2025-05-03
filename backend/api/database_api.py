@@ -38,6 +38,20 @@ def get_db_session():
     Session = sessionmaker(bind=engine)
     return Session()
 
+class SessionResponseItem(BaseModel):
+    id: int
+    file_name: str
+    file_path: Optional[str] = None
+    interface: Optional[str] = None
+    filter_applied: Optional[str] = None
+    capture_date: str
+    packet_count: int
+    anomaly_count: Optional[int] = 0
+    
+class SessionsResponse(BaseModel):
+    sessions: List[SessionResponseItem]
+    total: int
+
 class PacketResponseItem(BaseModel):
     id: int
     packet_number: int
@@ -52,3 +66,159 @@ class PacketResponseItem(BaseModel):
 class PacketResponse(BaseModel):
     packets: List[PacketResponseItem]
     total: int
+
+# Endpoint para obtener todas las sesiones de captura
+@router.get("/sessions", response_model=SessionsResponse)
+async def get_sessions(db=Depends(get_db_session)):
+    """
+    Obtiene todas las sesiones de captura almacenadas en la base de datos
+    """
+    try:
+        # Obtenemos las sesiones con conteo de anomalías
+        sessions_with_anomalies = (
+            db.query(
+                CaptureSession,
+                func.count(Anomaly.id).label('anomaly_count')
+            )
+            .outerjoin(Packet, CaptureSession.id == Packet.session_id)
+            .outerjoin(Anomaly, Packet.id == Anomaly.packet_id)
+            .group_by(CaptureSession.id)
+            .order_by(desc(CaptureSession.capture_date))
+            .all()
+        )
+        
+        # Formateamos la respuesta
+        session_items = []
+        for session, anomaly_count in sessions_with_anomalies:
+            # Convertir la fecha a string en formato ISO para JSON
+            capture_date_str = session.capture_date.isoformat() if session.capture_date else ""
+            
+            session_items.append(
+                SessionResponseItem(
+                    id=session.id,
+                    file_name=session.file_name,
+                    file_path=session.file_path,
+                    interface=session.interface,
+                    filter_applied=session.filter_applied,
+                    capture_date=capture_date_str,
+                    packet_count=session.packet_count or 0,
+                    anomaly_count=anomaly_count or 0
+                )
+            )
+        
+        return SessionsResponse(sessions=session_items, total=len(session_items))
+        
+    except Exception as e:
+        # Loguear el error para depuración
+        import traceback
+        print(f"Error al obtener sesiones: {str(e)}")
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Error al obtener sesiones: {str(e)}")
+
+# Obtener detalles de una sesión específica
+@router.get("/sessions/{session_id}", response_model=dict)
+def get_session_details(session_id: int):
+    """
+    Obtiene los detalles completos de una sesión de captura específica.
+    """
+    db_session = get_db_session()
+    try:
+        # Buscar la sesión por ID
+        session = db_session.query(CaptureSession).filter(CaptureSession.id == session_id).first()
+        if not session:
+            raise HTTPException(status_code=404, detail=f"Sesión con ID {session_id} no encontrada")
+            
+        # Contar paquetes y anomalías para esta sesión
+        packet_count = db_session.query(func.count(Packet.id)).filter(
+            Packet.session_id == session_id
+        ).scalar()
+        
+        anomaly_count = db_session.query(func.count(Anomaly.id)).filter(
+            Anomaly.session_id == session_id
+        ).scalar()
+        
+        # Devuelve detalles de la sesión junto con los conteos
+        return {
+            "id": session.id,
+            "start_time": session.start_time,
+            "end_time": session.end_time,
+            "interface": session.interface,
+            "pcap_file": session.pcap_file,
+            "packet_count": packet_count,
+            "anomaly_count": anomaly_count,
+            "status": session.status
+        }
+    finally:
+        db_session.close()
+
+# Obtener análisis estadísticos de una sesión
+@router.get("/analytics/{session_id}", response_model=dict)
+def get_session_analytics(session_id: int):
+    """
+    Obtiene análisis estadísticos de una sesión específica.
+    """
+    db_session = get_db_session()
+    try:
+        # Verificar que la sesión existe
+        session = db_session.query(CaptureSession).filter(CaptureSession.id == session_id).first()
+        if not session:
+            raise HTTPException(status_code=404, detail=f"Sesión con ID {session_id} no encontrada")
+        
+        # Estadísticas por protocolo
+        protocol_stats = db_session.query(
+            Packet.protocol,
+            func.count(Packet.id).label('count')
+        ).filter(
+            Packet.session_id == session_id
+        ).group_by(
+            Packet.protocol
+        ).all()
+        
+        protocol_data = {p[0]: p[1] for p in protocol_stats}
+        
+        # Top IPs origen
+        top_src_ips = db_session.query(
+            Packet.src_ip,
+            func.count(Packet.id).label('count')
+        ).filter(
+            Packet.session_id == session_id
+        ).group_by(
+            Packet.src_ip
+        ).order_by(
+            desc('count')
+        ).limit(10).all()
+        
+        # Top IPs destino
+        top_dst_ips = db_session.query(
+            Packet.dst_ip,
+            func.count(Packet.id).label('count')
+        ).filter(
+            Packet.session_id == session_id
+        ).group_by(
+            Packet.dst_ip
+        ).order_by(
+            desc('count')
+        ).limit(10).all()
+        
+        # Distribución de anomalías
+        anomaly_distribution = db_session.query(
+            Anomaly.type,
+            func.count(Anomaly.id).label('count')
+        ).filter(
+            Anomaly.session_id == session_id
+        ).group_by(
+            Anomaly.type
+        ).all()
+        
+        return {
+            "session_id": session_id,
+            "protocol_distribution": protocol_data,
+            "top_source_ips": [{"ip": ip, "count": count} for ip, count in top_src_ips],
+            "top_destination_ips": [{"ip": ip, "count": count} for ip, count in top_dst_ips],
+            "anomaly_distribution": [{"type": type_, "count": count} for type_, count in anomaly_distribution],
+            "total_packets": sum(p[1] for p in protocol_stats) if protocol_stats else 0
+        }
+    finally:
+        db_session.close()
+        
+# Resto del archivo continúa abajo...

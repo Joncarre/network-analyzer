@@ -66,15 +66,16 @@ Información sobre la sesión actual de captura:
             if len(self.conversation_history) > 10:
                 self.conversation_history = self.conversation_history[-10:]
             
-            # Construir mensajes para la API
-            messages = [{"role": "system", "content": system_prompt}]
-            messages.extend(self.conversation_history)
-            messages.append({"role": "user", "content": user_question})
+            # Construir mensajes sin el system prompt
+            messages_for_api = []
+            messages_for_api.extend(self.conversation_history)
+            messages_for_api.append({"role": "user", "content": user_question})
             
-            # Preparar payload para la llamada a la API
+            # Preparar payload para la llamada a la API con system como parámetro top-level
             payload = {
                 "model": self.model,
-                "messages": messages,
+                "system": system_prompt, # <-- System prompt como parámetro separado
+                "messages": messages_for_api, # <-- Mensajes sin el system prompt
                 "max_tokens": self.max_tokens
             }
             
@@ -90,7 +91,21 @@ Información sobre la sesión actual de captura:
             
             # Parsear respuesta
             result = response.json()
-            answer = result.get("content", [{"text": "Sin respuesta"}])[0].get("text", "Sin respuesta")
+            
+            # Manejar correctamente la estructura de la respuesta de Claude
+            # La respuesta tiene un campo 'content' que es una lista de objetos
+            content = result.get("content", [])
+            if not content or not isinstance(content, list):
+                return "Sin respuesta o formato de respuesta inesperado"
+                
+            # Extraer el texto del primer elemento de contenido
+            answer = ""
+            for item in content:
+                if item.get("type") == "text":
+                    answer += item.get("text", "")
+            
+            if not answer:
+                return "No se pudo extraer texto de la respuesta"
             
             # Actualizar historial
             self.conversation_history.append({"role": "user", "content": user_question})
