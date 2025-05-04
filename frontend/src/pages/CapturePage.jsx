@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react'; // Añadir useRef
 import { getInterfaces, startCapture, listPcapFiles, uploadPcapFile } from '../services/api';
 
 function CapturePage() {
@@ -15,6 +15,7 @@ function CapturePage() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploadStatus, setUploadStatus] = useState('');
   const [fileLoading, setFileLoading] = useState(false);
+  const fileInputRef = useRef(null); // Crear una referencia para el input file
 
   // Cargar interfaces disponibles al montar el componente
   useEffect(() => {
@@ -94,7 +95,7 @@ function CapturePage() {
     
     try {
       setFileLoading(true);
-      setUploadStatus('Subiendo archivo...');
+      setUploadStatus('Generando base de datos...');
       
       const response = await uploadPcapFile(
         selectedFile,
@@ -102,12 +103,15 @@ function CapturePage() {
         selectedInterface
       );
       
-      setUploadStatus(`Archivo subido correctamente: ${response.data.file_name}`);
+      setUploadStatus(`Base de datos generada.`);
       
       // Actualizar lista de archivos
       const filesResponse = await listPcapFiles();
       setPcapFiles(filesResponse.data);
-      setSelectedFile(null);
+      setSelectedFile(null); // Limpiar el estado del archivo seleccionado
+      if (fileInputRef.current) {
+        fileInputRef.current.value = null; // Limpiar el input file visualmente
+      }
       
     } catch (error) {
       console.error('Error al subir archivo:', error);
@@ -116,7 +120,7 @@ function CapturePage() {
         // Error de conflicto - archivo duplicado
         setUploadStatus(`Error: ${error.response.data.detail}`);
       } else {
-        setUploadStatus(`Error al subir archivo: ${error.response?.data?.detail || error.message}`);
+        setUploadStatus(`Error al generar base de datos: ${error.response?.data?.detail || error.message}`);
       }
     } finally {
       setFileLoading(false);
@@ -130,7 +134,7 @@ function CapturePage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Sección de Captura en Vivo */}
         <div className="bg-white p-4 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-4">Captura en Vivo</h2>
+          {/* <h2 className="text-xl font-semibold mb-4">Captura en Vivo</h2> */}
           
           <div className="mb-4">
             <label className="block text-sm font-medium mb-1">Interfaz de Red</label>
@@ -189,11 +193,12 @@ function CapturePage() {
         
         {/* Sección de Subida de Archivos PCAP */}
         <div className="bg-white p-4 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-4">Subir Archivo PCAP</h2>
+          <h2 className="text-xl font-semibold mb-4">Generar base de datos desde fichero .pcap</h2>
           
           <div className="mb-4">
             <label className="block text-sm font-medium mb-1">Archivo PCAP</label>
             <input 
+              ref={fileInputRef} // Asignar la referencia al input
               type="file" 
               className="w-full border rounded p-2"
               accept=".pcap,.pcapng"
@@ -205,7 +210,7 @@ function CapturePage() {
           <button 
             className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 disabled:opacity-50"
             onClick={handleFileUpload}
-            disabled={!selectedFile || fileLoading}
+            disabled={fileLoading || !selectedFile} // Modificado: deshabilitado si carga o no hay archivo
           >
             {fileLoading ? 'Subiendo...' : 'Subir Archivo'}
           </button>
@@ -218,7 +223,7 @@ function CapturePage() {
           
           {/* Lista de archivos PCAP existentes - sin botón Procesar */}
           <div className="mt-6">
-            <h3 className="text-lg font-medium mb-2">Archivos PCAP Disponibles</h3>
+            <h3 className="text-lg font-medium mb-2">Archivos .pcap almacenados</h3>
             {pcapFiles.length === 0 ? (
               <p className="text-gray-500">No hay archivos PCAP disponibles.</p>
             ) : (

@@ -90,9 +90,11 @@ async def upload_pcap_file(
     
     # Procesar el archivo si se solicita
     db_path = None
+    file_size = None # Variable para guardar el tamaño antes de borrar
     if process_immediately:
         try:
             print(f"Procesando archivo: {file_path}")
+            file_size = os.path.getsize(file_path) # Obtener tamaño ANTES de procesar/borrar
             
             # Usar concurrent.futures para ejecutar en un proceso separado
             with concurrent.futures.ProcessPoolExecutor() as executor:
@@ -106,15 +108,30 @@ async def upload_pcap_file(
                 
             if not db_path:
                 print(f"⚠️ El procesamiento del archivo {file.filename} no generó una base de datos válida")
+            else:
+                # Eliminar el archivo PCAP original si el procesamiento fue exitoso
+                try:
+                    os.remove(file_path)
+                    print(f"Archivo PCAP original '{file.filename}' eliminado después del procesamiento exitoso.")
+                except OSError as e:
+                    print(f"Error al eliminar el archivo PCAP '{file_path}': {e}")
+                    
         except Exception as e:
             print(f"❌ Error al procesar el archivo {file.filename}: {e}")
             import traceback
             traceback.print_exc()
+            # Si hubo error procesando, no borramos y file_size puede ser None o tener valor previo
+            if file_size is None and os.path.exists(file_path):
+                 file_size = os.path.getsize(file_path)
+
+    # Si no se procesó inmediatamente, obtener tamaño ahora
+    elif os.path.exists(file_path):
+        file_size = os.path.getsize(file_path)
     
     return {
         "file_name": file.filename,
-        "file_path": file_path,
-        "size": os.path.getsize(file_path),
+        "file_path": file_path, 
+        "size": file_size, # Usar el tamaño guardado
         "processed": process_immediately and db_path is not None,
         "db_path": db_path if db_path else None
     }
