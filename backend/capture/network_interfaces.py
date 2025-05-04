@@ -173,10 +173,14 @@ def capture_packets(interface_id, duration=60, output_file=None, packet_count=No
         if display_filter:
             command.extend(["-f", display_filter])
             
+        # Añadir límite de paquetes si se especifica
         if packet_count:
             command.extend(["-c", str(packet_count)])
-        else:
-            command.extend(["-a", f"duration:{duration}"])
+            
+        # Añadir límite de duración si se especifica y no hay límite de paquetes,
+        # o si se especifican ambos (tshark se detendrá con la primera condición)
+        if duration:
+             command.extend(["-a", f"duration:{duration}"])
             
         print(f"Ejecutando comando: {' '.join(command)}")
         

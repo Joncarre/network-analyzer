@@ -151,10 +151,10 @@ function CapturePage() {
           <div className="mb-4">
             <label className="block text-sm font-medium mb-1">Duración (segundos)</label>
             <input 
-              type="number" 
+              type="text" // Cambiado de number a text
               className="w-full border rounded p-2"
               value={duration}
-              onChange={(e) => setDuration(Number(e.target.value))}
+              onChange={(e) => setDuration(Number(e.target.value) || 0)} // Asegurar que sea un número o 0
               disabled={isCapturing || loading}
               min="1"
             />
@@ -163,10 +163,10 @@ function CapturePage() {
           <div className="mb-4">
             <label className="block text-sm font-medium mb-1">Límite de Paquetes</label>
             <input 
-              type="number" 
+              type="text" // Cambiado de number a text
               className="w-full border rounded p-2"
               value={packetCount}
-              onChange={(e) => setPacketCount(Number(e.target.value))}
+              onChange={(e) => setPacketCount(Number(e.target.value) || 0)} // Asegurar que sea un número o 0
               disabled={isCapturing || loading}
               min="1"
             />
