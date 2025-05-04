@@ -21,11 +21,15 @@ conn = sqlite3.connect(latest_db)
 cursor = conn.cursor()
 
 # Obtener IDs de sesiones disponibles
-cursor.execute("SELECT id, file_name FROM capture_sessions")
+cursor.execute("SELECT id FROM capture_sessions")
 sessions = cursor.fetchall()
-print("Sesiones disponibles:")
-for session_id, file_name in sessions:
-    print(f"ID: {session_id}, Archivo: {file_name}")
+
+# Formatear los IDs para mostrarlos
+session_ids = [session[0] for session in sessions]
+if len(session_ids) == 1:
+    print(f"ID de sesiones disponibles: ({session_ids[0]})")
+else:
+    print(f"ID de sesiones disponibles: {tuple(session_ids)}")
 
 # Seleccionar una sesión
 session_id = int(input("\nIntroduce el ID de la sesión a consultar: "))
