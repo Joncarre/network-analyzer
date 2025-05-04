@@ -7,20 +7,38 @@ import dotenv
 # Cargar variables de entorno
 dotenv.load_dotenv()
 
-# Encontrar el archivo de base de datos más reciente
+# Encontrar archivos de base de datos
 db_dir = os.getenv('DATABASE_DIRECTORY', './data/db_files')
-db_files = glob.glob(os.path.join(db_dir, 'database_*.db'))
-if not db_files:
-    print("No se encontró ninguna base de datos")
-    exit(1)
-latest_db = max(db_files, key=os.path.getmtime)
-print(f"Usando base de datos: {latest_db}")
+db_files = sorted(glob.glob(os.path.join(db_dir, 'database_*.db')), key=os.path.getmtime, reverse=True) # Ordenar por fecha, más reciente primero
 
-# Conectar a la base de datos
-conn = sqlite3.connect(latest_db)
+if not db_files:
+    print(f"No se encontró ninguna base de datos en el directorio: {db_dir}")
+    exit(1)
+
+# Listar bases de datos disponibles para selección
+print("Bases de datos disponibles:")
+for i, db_file in enumerate(db_files):
+    print(f"{i + 1}: {os.path.basename(db_file)}") # Mostrar solo el nombre del archivo
+
+# Solicitar selección al usuario
+selected_db_index = -1
+while selected_db_index < 0 or selected_db_index >= len(db_files):
+    try:
+        choice = input(f"\nSelecciona el número de la base de datos a usar (1-{len(db_files)}): ")
+        selected_db_index = int(choice) - 1
+        if selected_db_index < 0 or selected_db_index >= len(db_files):
+            print("Selección inválida. Por favor, introduce un número de la lista.")
+    except ValueError:
+        print("Entrada inválida. Por favor, introduce un número.")
+
+selected_db = db_files[selected_db_index]
+print(f"\nUsando base de datos seleccionada: {selected_db}")
+
+# Conectar a la base de datos seleccionada
+conn = sqlite3.connect(selected_db)
 cursor = conn.cursor()
 
-# Obtener IDs de sesiones disponibles
+# Obtener IDs de sesiones disponibles de la DB seleccionada
 cursor.execute("SELECT id FROM capture_sessions")
 sessions = cursor.fetchall()
 
