@@ -9,14 +9,9 @@ from api.capture_api import router as capture_router
 from api.processing_api import router as processing_router
 from api.database_api import router as database_router
 from api.ai_api import router as ai_router
-from database.models import init_db
 
 # Cargar variables de entorno
 load_dotenv()
-
-# Inicializar la base de datos - llamará a la lógica actualizada para encontrar/crear
-engine, used_db_path = init_db() 
-print(f"Aplicación principal conectada a: {used_db_path}")
 
 # Crear la aplicación FastAPI
 app = FastAPI(

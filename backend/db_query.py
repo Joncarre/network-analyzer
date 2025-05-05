@@ -9,19 +9,40 @@ import sys
 import sqlite3
 from prettytable import PrettyTable
 from datetime import datetime
+import argparse
 
 def print_header(text):
     """Imprime un encabezado formateado"""
-    print("\n" + "=" * 70)
-    print(f" {text} ".center(70, "="))
-    print("=" * 70)
+    print("\n" + "=" * 80)
+    print(f" {text} ".center(80, "="))
+    print("=" * 80)
 
 def get_table_count(cursor, table_name):
     """Obtiene el conteo de registros de una tabla"""
     cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
     return cursor.fetchone()[0]
 
-def query_database(db_path):
+def get_column_names(cursor, table_name):
+    """Obtiene los nombres de las columnas de una tabla"""
+    cursor.execute(f"PRAGMA table_info({table_name})")
+    return [row[1] for row in cursor.fetchall()]
+
+def format_value(value):
+    """Formatea un valor para su presentación"""
+    if value is None:
+        return "NULL"
+    elif isinstance(value, bool):
+        return "✓" if value else "✗"
+    elif isinstance(value, (int, float)):
+        return f"{value}"
+    else:
+        # Truncar strings largos
+        value_str = str(value)
+        if len(value_str) > 50:
+            return value_str[:47] + "..."
+        return value_str
+
+def query_database(db_path, detailed=False, limit=10):
     """Consulta y muestra información general de la base de datos"""
     if not os.path.exists(db_path):
         print(f"Error: La base de datos '{db_path}' no existe.")
@@ -29,6 +50,7 @@ def query_database(db_path):
     
     try:
         conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row  # Para acceder a columnas por nombre
         cursor = conn.cursor()
         
         # Información general del archivo de la base de datos
@@ -81,8 +103,8 @@ def query_database(db_path):
             for session in sessions:
                 # Formatear la fecha si es necesario
                 capture_date = session[4]
-                if capture_date and len(capture_date) > 19:
-                    capture_date = capture_date[:19]  # Solo tomar los primeros 19 caracteres
+                if capture_date and len(str(capture_date)) > 19:
+                    capture_date = str(capture_date)[:19]  # Solo tomar los primeros 19 caracteres
                 
                 sessions_table.add_row([
                     session[0], 
@@ -145,12 +167,194 @@ def query_database(db_path):
             for ip_data in top_src_ips:
                 percentage = (ip_data[1] / total_packets) * 100 if total_packets > 0 else 0
                 src_ip_table.add_row([
-                    ip_data[0], 
+                    ip_data[0] or "N/A", 
                     ip_data[1],
                     f"{percentage:.2f}%"
                 ])
             print(src_ip_table)
+
+        # Top puertos de destino
+        print_header("TOP 10 PUERTOS DE DESTINO")
+        cursor.execute("""
+            SELECT 
+                dst_port, transport_protocol, COUNT(*) as count
+            FROM 
+                packets
+            WHERE
+                dst_port IS NOT NULL
+            GROUP BY 
+                dst_port, transport_protocol
+            ORDER BY 
+                count DESC
+            LIMIT 10
+        """)
         
+        top_ports = cursor.fetchall()
+        if top_ports:
+            port_table = PrettyTable()
+            port_table.field_names = ["Puerto Destino", "Protocolo", "Paquetes", "Porcentaje"]
+            
+            total_with_ports = sum(p[2] for p in top_ports)
+            for port_data in top_ports:
+                percentage = (port_data[2] / total_with_ports) * 100 if total_with_ports > 0 else 0
+                port_table.add_row([
+                    port_data[0], 
+                    port_data[1] or "N/A",
+                    port_data[2],
+                    f"{percentage:.2f}%"
+                ])
+            print(port_table)
+            
+        # Estadísticas de HTTP (si hay tráfico HTTP)
+        cursor.execute("SELECT COUNT(*) FROM packets WHERE protocol = 'HTTP'")
+        if cursor.fetchone()[0] > 0:
+            print_header("ESTADÍSTICAS HTTP")
+            
+            # Métodos HTTP
+            cursor.execute("""
+                SELECT 
+                    http_method, COUNT(*) as count
+                FROM 
+                    packets
+                WHERE 
+                    http_method IS NOT NULL
+                GROUP BY 
+                    http_method
+                ORDER BY 
+                    count DESC
+            """)
+            
+            methods = cursor.fetchall()
+            if methods:
+                method_table = PrettyTable()
+                method_table.field_names = ["Método HTTP", "Cantidad"]
+                for method in methods:
+                    method_table.add_row([method[0], method[1]])
+                print(method_table)
+                
+            # Códigos de respuesta HTTP
+            cursor.execute("""
+                SELECT 
+                    http_response_code, COUNT(*) as count
+                FROM 
+                    packets
+                WHERE 
+                    http_response_code IS NOT NULL
+                GROUP BY 
+                    http_response_code
+                ORDER BY 
+                    count DESC
+            """)
+            
+            responses = cursor.fetchall()
+            if responses:
+                response_table = PrettyTable()
+                response_table.field_names = ["Código HTTP", "Descripción", "Cantidad"]
+                for resp in responses:
+                    # Descripción del código HTTP
+                    desc = ""
+                    code = resp[0]
+                    if code >= 100 and code < 200:
+                        desc = "Informativo"
+                    elif code >= 200 and code < 300:
+                        desc = "Éxito"
+                    elif code >= 300 and code < 400:
+                        desc = "Redirección"
+                    elif code >= 400 and code < 500:
+                        desc = "Error cliente"
+                    elif code >= 500 and code < 600:
+                        desc = "Error servidor"
+                        
+                    response_table.add_row([code, desc, resp[1]])
+                print("\nCódigos de respuesta HTTP:")
+                print(response_table)
+                
+        # Estadísticas DNS (si hay tráfico DNS)
+        cursor.execute("SELECT COUNT(*) FROM packets WHERE protocol = 'DNS'")
+        if cursor.fetchone()[0] > 0:
+            print_header("ESTADÍSTICAS DNS")
+            
+            # Tipos de consulta DNS
+            cursor.execute("""
+                SELECT 
+                    dns_query_type, COUNT(*) as count
+                FROM 
+                    packets
+                WHERE 
+                    dns_query_type IS NOT NULL
+                GROUP BY 
+                    dns_query_type
+                ORDER BY 
+                    count DESC
+            """)
+            
+            dns_types = cursor.fetchall()
+            if dns_types:
+                dns_type_table = PrettyTable()
+                dns_type_table.field_names = ["Tipo de Consulta", "Cantidad"]
+                for dns_type in dns_types:
+                    dns_type_table.add_row([dns_type[0], dns_type[1]])
+                print(dns_type_table)
+                
+            # Top dominios consultados
+            cursor.execute("""
+                SELECT 
+                    dns_query_name, COUNT(*) as count
+                FROM 
+                    packets
+                WHERE 
+                    dns_query_name IS NOT NULL
+                GROUP BY 
+                    dns_query_name
+                ORDER BY 
+                    count DESC
+                LIMIT 10
+            """)
+            
+            domains = cursor.fetchall()
+            if domains:
+                domain_table = PrettyTable()
+                domain_table.field_names = ["Dominio", "Consultas"]
+                for domain in domains:
+                    domain_table.add_row([domain[0], domain[1]])
+                print("\nTop 10 dominios consultados:")
+                print(domain_table)
+                
+        # Estadísticas TCP
+        print_header("ESTADÍSTICAS DE BANDERAS TCP")
+        cursor.execute("""
+            SELECT 
+                SUM(CASE WHEN tcp_flag_syn = 1 THEN 1 ELSE 0 END) as syn,
+                SUM(CASE WHEN tcp_flag_ack = 1 THEN 1 ELSE 0 END) as ack,
+                SUM(CASE WHEN tcp_flag_fin = 1 THEN 1 ELSE 0 END) as fin,
+                SUM(CASE WHEN tcp_flag_rst = 1 THEN 1 ELSE 0 END) as rst,
+                SUM(CASE WHEN tcp_flag_psh = 1 THEN 1 ELSE 0 END) as psh,
+                SUM(CASE WHEN tcp_flag_urg = 1 THEN 1 ELSE 0 END) as urg,
+                SUM(CASE WHEN tcp_flag_ece = 1 THEN 1 ELSE 0 END) as ece,
+                SUM(CASE WHEN tcp_flag_cwr = 1 THEN 1 ELSE 0 END) as cwr,
+                SUM(CASE WHEN tcp_flag_ns = 1 THEN 1 ELSE 0 END) as ns,
+                COUNT(*) as total_tcp
+            FROM 
+                packets
+            WHERE 
+                protocol = 'TCP'
+        """)
+        
+        tcp_stats = cursor.fetchone()
+        if tcp_stats and tcp_stats['total_tcp'] > 0:
+            flags_table = PrettyTable()
+            flags_table.field_names = ["Flag", "Cantidad", "Porcentaje"]
+            
+            for flag in ["syn", "ack", "fin", "rst", "psh", "urg", "ece", "cwr", "ns"]:
+                count = tcp_stats[flag] or 0
+                percentage = (count / tcp_stats['total_tcp']) * 100
+                flags_table.add_row([
+                    flag.upper(), 
+                    count,
+                    f"{percentage:.2f}%"
+                ])
+            print(flags_table)
+            
         # Anomalías detectadas
         print_header("ANOMALÍAS DETECTADAS")
         cursor.execute("""
@@ -173,7 +377,8 @@ def query_database(db_path):
             for anomaly in anomalies:
                 anomaly_table.add_row(anomaly)
             print(anomaly_table)
-        
+            
+        # Ya no mostramos la sección de muestra de paquetes
         return True
         
     except sqlite3.Error as e:
@@ -186,24 +391,61 @@ def query_database(db_path):
 
 def main():
     """Función principal"""
-    if len(sys.argv) != 2:
-        print("Uso: python db_query.py <ruta_de_la_base_de_datos>")
-        print("\nEjemplo:")
-        print("python db_query.py ./data/db_files/database_20250502_175614.db")
-        
-        # Listar bases de datos disponibles si no se proporciona una
+    parser = argparse.ArgumentParser(description="Consulta información de bases de datos del Network Analyzer")
+    parser.add_argument("db_path", nargs="?", help="Ruta de la base de datos a consultar")
+    parser.add_argument("-d", "--detailed", action="store_true", help="Mostrar información detallada de los paquetes")
+    parser.add_argument("-l", "--limit", type=int, default=5, help="Límite de paquetes a mostrar en modo detallado (por defecto: 5)")
+    
+    args = parser.parse_args()
+    
+    # Si no se proporciona una ruta de base de datos
+    if not args.db_path:
+        # Listar bases de datos disponibles
         db_dir = os.getenv('DATABASE_DIRECTORY', './data/db_files')
         if os.path.exists(db_dir):
+            db_files = []
             print("\nBases de datos disponibles:")
             for file in sorted(os.listdir(db_dir), reverse=True):
                 if file.endswith(".db"):
                     file_path = os.path.join(db_dir, file)
                     size = os.path.getsize(file_path) / 1024  # KB
-                    print(f"- {file} ({size:.2f} KB)")
-        return 1
+                    mod_time = datetime.fromtimestamp(os.path.getmtime(file_path)).strftime("%Y-%m-%d %H:%M:%S")
+                    db_files.append((file, file_path, size, mod_time))
+            
+            # Mostrar tabla de bases de datos disponibles
+            if db_files:
+                db_table = PrettyTable()
+                db_table.field_names = ["#", "Archivo", "Tamaño (KB)", "Fecha modificación"]
+                for i, (file, path, size, mod_time) in enumerate(db_files):
+                    db_table.add_row([i+1, file, f"{size:.2f}", mod_time])
+                print(db_table)
+                
+                # Permitir selección interactiva
+                try:
+                    choice = input("\nSelecciona el número de la base de datos o presiona Enter para salir: ")
+                    if choice and choice.isdigit():
+                        idx = int(choice) - 1
+                        if 0 <= idx < len(db_files):
+                            args.db_path = db_files[idx][1]
+                            print(f"\nSeleccionada: {db_files[idx][0]}")
+                        else:
+                            print("Selección no válida.")
+                            return 1
+                    else:
+                        print("Operación cancelada.")
+                        return 1
+                except (ValueError, IndexError):
+                    print("Selección no válida.")
+                    return 1
+            else:
+                print("No se encontraron bases de datos.")
+                return 1
+        else:
+            print(f"El directorio de bases de datos '{db_dir}' no existe.")
+            print("Uso: python db_query.py <ruta_de_la_base_de_datos> [--detailed] [--limit N]")
+            return 1
     
-    db_path = sys.argv[1]
-    success = query_database(db_path)
+    success = query_database(args.db_path, args.detailed, args.limit)
     return 0 if success else 1
 
 if __name__ == "__main__":
