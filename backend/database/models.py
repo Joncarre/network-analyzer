@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, Float, Boolean, ForeignKey, DateTime, Table, Text
+from sqlalchemy import create_engine, Column, Integer, String, Float, Boolean, ForeignKey, DateTime, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 import os
@@ -8,23 +8,25 @@ import glob
 Base = declarative_base()
 
 class CaptureSession(Base):
-    """Modelo para almacenar metadatos de una sesión de captura"""
+    """Modelo para almacenar información de una sesión de captura"""
     __tablename__ = 'capture_sessions'
     
     id = Column(Integer, primary_key=True)
-    file_name = Column(String(255), nullable=False)
-    file_path = Column(String(512), nullable=False)
-    capture_date = Column(DateTime, default=datetime.utcnow)
-    interface = Column(String(255))
-    duration = Column(Integer)  # en segundos
-    packet_count = Column(Integer)
-    filter_applied = Column(String(512))
+    start_time = Column(DateTime, default=datetime.now)
+    end_time = Column(DateTime, nullable=True)
+    file_name = Column(String(255), nullable=True)
+    file_path = Column(String(512), nullable=True)
+    interface = Column(String(100), nullable=True)
+    filter_applied = Column(String(255), nullable=True)
+    pcap_file = Column(String(512), nullable=True)
+    packet_count = Column(Integer, default=0)
+    status = Column(String(50), default="en_progreso")
+    capture_date = Column(DateTime, default=datetime.now)
     
-    # Relaciones
     packets = relationship("Packet", back_populates="session", cascade="all, delete-orphan")
     
     def __repr__(self):
-        return f"<CaptureSession(id={self.id}, file='{self.file_name}')>"
+        return f"<CaptureSession(id={self.id}, file={self.file_name})>"
 
 class Packet(Base):
     """Modelo para almacenar información detallada de paquetes"""
@@ -41,11 +43,25 @@ class Packet(Base):
     capture_interface = Column(String, nullable=True) # Interfaz donde se capturó
     frame_number = Column(Integer, nullable=True)     # Número de frame
     
-    # CAPA 2 - ETHERNET
+    # Metadatos adicionales del frame
+    frame_time_relative = Column(Float, nullable=True)  # Tiempo relativo desde inicio de captura
+    frame_time_delta = Column(Float, nullable=True)     # Tiempo desde frame anterior
+    
+    # Capa 2 - Ethernet
     src_mac = Column(String(17), nullable=True)      # Dirección MAC origen
     dst_mac = Column(String(17), nullable=True)      # Dirección MAC destino
-    eth_type = Column(String(10), nullable=True)     # Tipo de Ethernet (e.g., 0x0800 para IPv4)
-    vlan_id = Column(Integer, nullable=True)         # ID de VLAN si existe
+    eth_type = Column(String(10), nullable=True)     # Tipo Ethernet (0x0800 para IPv4)
+    vlan_id = Column(Integer, nullable=True)         # VLAN ID si está presente
+    
+    # Bits adicionales de Ethernet
+    eth_dst_lg = Column(Boolean, nullable=True)       # Bit Locally Administered (dirección destino)
+    eth_dst_ig = Column(Boolean, nullable=True)       # Bit Individual/Group (dirección destino)
+    eth_src_lg = Column(Boolean, nullable=True)       # Bit Locally Administered (dirección origen)
+    eth_src_ig = Column(Boolean, nullable=True)       # Bit Individual/Group (dirección origen)
+    
+    # PPP - Point-to-Point Protocol
+    ppp_protocol = Column(String(10), nullable=True)  # Protocolo PPP
+    ppp_direction = Column(String(10), nullable=True) # Dirección PPP
     
     # CAPA 3 - IP (campos comunes)
     ip_version = Column(Integer, nullable=True)      # Versión IP (4 o 6)
@@ -65,13 +81,15 @@ class Packet(Base):
     ip_ttl = Column(Integer, nullable=True)          # Time To Live
     ip_protocol = Column(Integer, nullable=True)     # Protocolo encapsulado
     ip_checksum = Column(String(10), nullable=True)  # Checksum
+    ip_options = Column(String, nullable=True)       # Opciones IP (representación de texto)
     
     # CAPA 3 - IPv6 específico
-    ipv6_traffic_class = Column(Integer, nullable=True) # Traffic Class
-    ipv6_flow_label = Column(Integer, nullable=True)   # Flow Label
+    ipv6_traffic_class = Column(Integer, nullable=True)  # Traffic Class
+    ipv6_flow_label = Column(Integer, nullable=True)     # Flow Label
     ipv6_payload_length = Column(Integer, nullable=True) # Payload Length
-    ipv6_next_header = Column(Integer, nullable=True)  # Next Header
-    ipv6_hop_limit = Column(Integer, nullable=True)    # Hop Limit
+    ipv6_next_header = Column(Integer, nullable=True)    # Next Header
+    ipv6_hop_limit = Column(Integer, nullable=True)      # Hop Limit
+    ipv6_ext_headers = Column(String, nullable=True)     # Extension Headers (JSON)
     
     # CAPA 4 - Común
     transport_protocol = Column(String(10), nullable=True) # TCP, UDP, ICMP, etc.
@@ -97,6 +115,7 @@ class Packet(Base):
     
     tcp_window_size = Column(Integer, nullable=True)  # Window Size
     tcp_window_size_scalefactor = Column(Integer, nullable=True)  # Window Scale Factor
+    tcp_window_size_value = Column(Integer, nullable=True)  # Window Size Value (calculated)
     tcp_checksum = Column(String(10), nullable=True)  # Checksum
     tcp_urgent_pointer = Column(Integer, nullable=True) # Urgent Pointer
     tcp_options = Column(String, nullable=True)       # Opciones TCP (representación de texto)
@@ -108,6 +127,18 @@ class Packet(Base):
     tcp_payload_size = Column(Integer, nullable=True) # Tamaño del payload
     tcp_analysis_flags = Column(String, nullable=True) # Flags de análisis (retransmisión, etc.)
     tcp_analysis_rtt = Column(Float, nullable=True)   # Round-Trip Time calculado
+    tcp_keep_alive = Column(Boolean, nullable=True)   # TCP Keep Alive
+    
+    # TCP Análisis avanzado
+    tcp_analysis_bytes_in_flight = Column(Integer, nullable=True)  # Bytes en vuelo
+    tcp_analysis_push_bytes_sent = Column(Integer, nullable=True)  # Bytes enviados con PSH
+    tcp_analysis_acks_frame = Column(Integer, nullable=True)       # Frame que ACK este paquete
+    tcp_analysis_retransmission = Column(Boolean, nullable=True)   # Es retransmisión
+    tcp_analysis_duplicate_ack = Column(Boolean, nullable=True)    # Es ACK duplicado
+    tcp_analysis_zero_window = Column(Boolean, nullable=True)      # Ventana cero
+    tcp_analysis_window_update = Column(Boolean, nullable=True)    # Actualización de ventana
+    tcp_analysis_keep_alive = Column(Boolean, nullable=True)       # Es keep-alive
+    tcp_analysis_keep_alive_ack = Column(Boolean, nullable=True)   # Es ACK de keep-alive
     
     # CAPA 4 - UDP específico
     udp_length = Column(Integer, nullable=True)       # Longitud UDP
@@ -122,44 +153,18 @@ class Packet(Base):
     icmp_identifier = Column(Integer, nullable=True)  # Identificador (Echo)
     icmp_sequence = Column(Integer, nullable=True)    # Número de secuencia (Echo)
     icmp_gateway = Column(String(45), nullable=True)  # Gateway (redirect)
-    icmp_length = Column(Integer, nullable=True)      # Longitud
+    icmp_length = Column(Integer, nullable=True)      # Longitud ICMP (opcional)
+    icmp_mtu = Column(Integer, nullable=True)         # MTU (Destination Unreachable/Fragmentation Needed)
+    icmp_unused = Column(Integer, nullable=True)      # Campo reservado/unused
     
-    # Otros protocolos de capa 7
-    protocol = Column(String(10))                    # Protocolo alto nivel (HTTP, DNS, etc.)
+    # ARP específico
+    arp_opcode = Column(Integer, nullable=True)           # Operation Code (1=req, 2=reply)
+    arp_src_hw = Column(String(17), nullable=True)       # Hardware Address (src MAC)
+    arp_dst_hw = Column(String(17), nullable=True)       # Hardware Address (dst MAC)
+    arp_src_ip = Column(String(15), nullable=True)       # Protocol Address (src IP)
+    arp_dst_ip = Column(String(15), nullable=True)       # Protocol Address (dst IP)
     
-    # Información DNS
-    dns_query_name = Column(String, nullable=True)
-    dns_query_type = Column(String, nullable=True)
-    dns_response_ips = Column(String, nullable=True)
-    dns_record_ttl = Column(Integer, nullable=True)
-    
-    # Información HTTP
-    http_method = Column(String(10), nullable=True)
-    http_uri = Column(String, nullable=True)
-    http_host = Column(String, nullable=True)
-    http_user_agent = Column(String, nullable=True)
-    http_referer = Column(String, nullable=True)
-    http_response_code = Column(Integer, nullable=True)
-    http_content_type = Column(String, nullable=True)
-    
-    # TLS/SSL
-    tls_version = Column(String(20), nullable=True)
-    tls_cipher_suite = Column(String, nullable=True)
-    tls_server_name = Column(String, nullable=True)
-    
-    # ARP
-    arp_opcode = Column(Integer, nullable=True)
-    arp_src_hw = Column(String(17), nullable=True)
-    arp_dst_hw = Column(String(17), nullable=True)
-    arp_src_ip = Column(String(15), nullable=True)
-    arp_dst_ip = Column(String(15), nullable=True)
-    
-    # DHCP
-    dhcp_message_type = Column(String(20), nullable=True)
-    dhcp_requested_ip = Column(String(15), nullable=True)
-    dhcp_client_mac = Column(String(17), nullable=True)
-    
-    # Métricas derivadas
+    # Metadatos adicionales
     delta_time = Column(Float, nullable=True)         # Tiempo desde el paquete anterior
     
     # Campos generales de análisis
@@ -179,19 +184,17 @@ class Packet(Base):
         return f"<Packet(id={self.id}, src={self.src_ip}, dst={self.dst_ip}, proto={self.protocol})>"
 
 class TCPInfo(Base):
-    """Información específica de TCP"""
+    """Información adicional para paquetes TCP"""
     __tablename__ = 'tcp_info'
     
     id = Column(Integer, primary_key=True)
     packet_id = Column(Integer, ForeignKey('packets.id'), nullable=False)
     src_port = Column(Integer, nullable=False)
     dst_port = Column(Integer, nullable=False)
-    seq_number = Column(Integer)
-    ack_number = Column(Integer)
-    window_size = Column(Integer)
-    header_length = Column(Integer)
-    
-    # Flags TCP
+    seq_number = Column(Integer, nullable=True)
+    ack_number = Column(Integer, nullable=True)
+    window_size = Column(Integer, nullable=True)
+    header_length = Column(Integer, nullable=True)
     flag_syn = Column(Boolean, default=False)
     flag_ack = Column(Boolean, default=False)
     flag_fin = Column(Boolean, default=False)
@@ -200,51 +203,49 @@ class TCPInfo(Base):
     flag_urg = Column(Boolean, default=False)
     flag_ece = Column(Boolean, default=False)
     flag_cwr = Column(Boolean, default=False)
-    
-    # Opciones TCP
     has_timestamp = Column(Boolean, default=False)
-    timestamp_value = Column(Integer)
-    timestamp_echo = Column(Integer)
-    mss = Column(Integer)  # Maximum Segment Size
-    window_scale = Column(Integer)
+    timestamp_value = Column(Integer, nullable=True)
+    timestamp_echo = Column(Integer, nullable=True)
+    mss = Column(Integer, nullable=True)
+    window_scale = Column(Integer, nullable=True)
     
     packet = relationship("Packet", back_populates="tcp_info")
     
     def __repr__(self):
-        return f"<TCPInfo(src_port={self.src_port}, dst_port={self.dst_port})>"
+        return f"<TCPInfo(id={self.id}, src_port={self.src_port}, dst_port={self.dst_port})>"
 
 class UDPInfo(Base):
-    """Información específica de UDP"""
+    """Información adicional para paquetes UDP"""
     __tablename__ = 'udp_info'
     
     id = Column(Integer, primary_key=True)
     packet_id = Column(Integer, ForeignKey('packets.id'), nullable=False)
     src_port = Column(Integer, nullable=False)
     dst_port = Column(Integer, nullable=False)
-    length = Column(Integer)
+    length = Column(Integer, nullable=True)
     
     packet = relationship("Packet", back_populates="udp_info")
     
     def __repr__(self):
-        return f"<UDPInfo(src_port={self.src_port}, dst_port={self.dst_port})>"
+        return f"<UDPInfo(id={self.id}, src_port={self.src_port}, dst_port={self.dst_port})>"
 
 class ICMPInfo(Base):
-    """Información específica de ICMP"""
+    """Información adicional para paquetes ICMP"""
     __tablename__ = 'icmp_info'
     
     id = Column(Integer, primary_key=True)
     packet_id = Column(Integer, ForeignKey('packets.id'), nullable=False)
-    icmp_type = Column(Integer, nullable=False)
-    icmp_code = Column(Integer, nullable=False)
-    icmp_type_name = Column(String(50))  # Nombre descriptivo del tipo
-    checksum = Column(Integer)
-    identifier = Column(Integer)  # Para ICMP Echo
-    sequence_number = Column(Integer)  # Para ICMP Echo
+    type = Column(Integer, nullable=False)
+    code = Column(Integer, nullable=False)
+    checksum = Column(String(10), nullable=True)
+    identifier = Column(Integer, nullable=True)
+    sequence = Column(Integer, nullable=True)
+    description = Column(String(255), nullable=True)
     
     packet = relationship("Packet", back_populates="icmp_info")
     
     def __repr__(self):
-        return f"<ICMPInfo(type={self.icmp_type}, code={self.icmp_code})>"
+        return f"<ICMPInfo(id={self.id}, type={self.type}, code={self.code})>"
 
 class Anomaly(Base):
     """Modelo para almacenar anomalías detectadas en los paquetes"""
@@ -252,14 +253,17 @@ class Anomaly(Base):
     
     id = Column(Integer, primary_key=True)
     packet_id = Column(Integer, ForeignKey('packets.id'), nullable=False)
-    type = Column(String(50), nullable=False)  # Tipo de anomalía
-    description = Column(Text, nullable=False)  # Descripción de la anomalía
-    severity = Column(String(20))  # baja, media, alta, crítica
+    session_id = Column(Integer, ForeignKey('capture_sessions.id'), nullable=True)
+    type = Column(String(100), nullable=False)
+    description = Column(String(512), nullable=False)
+    severity = Column(String(50), nullable=False)  # alta, media, baja
+    detection_method = Column(String(100), nullable=True)
+    detection_time = Column(DateTime, default=datetime.now)
     
     packet = relationship("Packet", back_populates="anomalies")
     
     def __repr__(self):
-        return f"<Anomaly(type='{self.type}', severity='{self.severity}')>"
+        return f"<Anomaly(id={self.id}, type={self.type}, severity={self.severity})>"
 
 def init_db(db_path=None, force_new=False):
     """

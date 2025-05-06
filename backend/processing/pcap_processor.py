@@ -1,5 +1,6 @@
 import pyshark
 import os
+import json
 from datetime import datetime
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -83,6 +84,10 @@ class PCAPProcessor:
             print(f"Comenzando procesamiento de paquetes con pyshark...")
             packet_iterator = iter(cap)
             packet_number_counter = 0
+            
+            # Realizar commits más frecuentemente para reducir el riesgo de perder datos
+            commit_frequency = 100  # Hacer commit cada 100 paquetes
+            pending_packet_count = 0
 
             while True:
                 try:
@@ -97,51 +102,70 @@ class PCAPProcessor:
                     if packet_number % 1000 == 0:
                         print(f"Procesando paquete pyshark #{packet_number}...")
                     
-                    self._process_packet(db_session, capture_session, packet_number, packet)
-                    packet_count += 1
+                    try:
+                        # Procesar este paquete en una "mini-transacción"
+                        result = self._process_packet(db_session, capture_session, packet_number, packet)
+                        if result:  # Si el procesamiento fue exitoso
+                            packet_count += 1
+                            pending_packet_count += 1
+                        else:
+                            skipped_packets += 1
+                    except Exception as packet_error:
+                        # Registrar el error pero continuar con otros paquetes
+                        error_packets += 1
+                        print(f"Error al procesar el paquete pyshark #{packet_number}: {packet_error}")
+                        # No hacer rollback aquí, solo continuamos con el siguiente paquete
+
+                    # Hacer commit más frecuentemente
+                    if pending_packet_count >= commit_frequency:
+                        try:
+                            db_session.commit()
+                            if packet_number % 1000 == 0:  # Solo imprimimos cada 1000 para no llenar la consola
+                                print(f"Commit realizado tras procesar {packet_number} paquetes ({packet_count} exitosos)")
+                            pending_packet_count = 0  # Reiniciar contador
+                        except Exception as commit_error:
+                            print(f"Error durante el commit periódico: {commit_error}")
+                            # Intentar continuar sin hacer rollback para salvar lo que se pueda
+                            # db_session.rollback()
 
                 except StopIteration:
                     print("Fin de la iteración de paquetes.")
                     break
                 except Exception as e:
                     error_packets += 1
-                    print(f"Error al procesar el paquete pyshark #{packet_number}: {e}")
+                    print(f"Error general al procesar el paquete pyshark #{packet_number_counter}: {e}")
+                    # No hacemos rollback aquí para mantener los paquetes procesados hasta ahora
 
-                if packet_number % 1000 == 0:
-                    try:
-                        db_session.commit()
-                        print(f"Commit pyshark realizado tras {packet_number} paquetes")
-                    except Exception as commit_error:
-                        print(f"Error durante el commit periódico: {commit_error}")
-                        db_session.rollback()
+            # Asegurarse de hacer commit de los últimos paquetes pendientes
+            if pending_packet_count > 0:
+                try:
+                    db_session.commit()
+                    print(f"Commit final de {pending_packet_count} paquetes pendientes")
+                except Exception as final_commit_error:
+                    print(f"Error durante el commit final de paquetes pendientes: {final_commit_error}")
             
+            # Actualizar el conteo de paquetes en la sesión
             try:
+                capture_session.packet_count = packet_count
                 db_session.commit()
-            except Exception as final_commit_error:
-                print(f"Error durante el commit final: {final_commit_error}")
-                db_session.rollback()
-
-            capture_session.packet_count = packet_count
-            db_session.commit()
+                print(f"Actualización del conteo de paquetes de la sesión: {packet_count}")
+            except Exception as e:
+                print(f"Error al actualizar el conteo de paquetes: {e}")
+                try:
+                    db_session.rollback()
+                    capture_session.packet_count = packet_count
+                    db_session.commit()
+                except:
+                    print("No se pudo actualizar el conteo de paquetes en la sesión")
             
             cap.close()
-            
-            packet_count_db = db_session.query(Packet).filter(Packet.session_id == capture_session.id).count()
-            tcp_count = db_session.query(TCPInfo).join(Packet).filter(Packet.session_id == capture_session.id).count()
-            udp_count = db_session.query(UDPInfo).join(Packet).filter(Packet.session_id == capture_session.id).count()
-            icmp_count = db_session.query(ICMPInfo).join(Packet).filter(Packet.session_id == capture_session.id).count()
-            anomaly_count = db_session.query(Anomaly).join(Packet).filter(Packet.session_id == capture_session.id).count()
             
             print(f"\n===== RESUMEN DEL PROCESAMIENTO =====")
             print(f"Total de paquetes examinados (aprox): {packet_number_counter}")
             print(f"Paquetes procesados con éxito: {packet_count}")
+            print(f"Paquetes omitidos: {skipped_packets}")
             print(f"Paquetes con errores: {error_packets}")
-            print(f"\nRegistros en la base de datos:")
-            print(f"- Paquetes: {packet_count_db}")
-            print(f"- TCP: {tcp_count}")
-            print(f"- UDP: {udp_count}")
-            print(f"- ICMP: {icmp_count}")
-            print(f"- Anomalías: {anomaly_count}")
+            print(f"Base de datos: {self.db_path}")
             
             return capture_session.id
             
@@ -157,18 +181,40 @@ class PCAPProcessor:
     
     def _process_packet(self, db_session, capture_session, packet_number, packet):
         """
-        Procesa un paquete individual (PyShark) y extrae información detallada de todas las capas.
+        Procesa un paquete individual (PyShark) y extrae información detallada de las capas 3 y 4.
+        
+        Returns:
+            bool: True si el paquete fue procesado correctamente, False en caso contrario.
         """
         # Variables para almacenar el timestamp del paquete anterior (para calcular delta)
         # Esta variable se mantendrá entre llamadas a _process_packet
         if not hasattr(self, '_last_packet_time'):
             self._last_packet_time = None
-        
+            self._start_time = None
+            
+        # Función auxiliar para convertir strings a enteros con manejo de 'False'
+        def safe_int_convert(value, base=10, default=None):
+            if value is None:
+                return default
+            try:
+                return int(value, base)
+            except ValueError:
+                if value == 'False':
+                    return 0
+                return default
+                
         # Metadatos básicos del paquete
         try:
             timestamp = float(packet.sniff_timestamp)
-            capture_length = int(packet.captured_length) if hasattr(packet, 'captured_length') else None
-            packet_length = int(packet.length) if hasattr(packet, 'length') else None
+            capture_length = safe_int_convert(getattr(packet, 'captured_length', None))
+            packet_length = safe_int_convert(getattr(packet, 'length', None))
+            
+            # Registrar la hora de inicio si es el primer paquete
+            if self._start_time is None:
+                self._start_time = timestamp
+            
+            # Calcular tiempos relativos
+            frame_time_relative = timestamp - self._start_time if self._start_time is not None else 0.0
             
             # Calcular delta_time (tiempo desde el paquete anterior)
             delta_time = None
@@ -176,17 +222,19 @@ class PCAPProcessor:
                 delta_time = timestamp - self._last_packet_time
             self._last_packet_time = timestamp
             
-            # Obtener interfaz de captura si está disponible
+            # Obtener interfaz de captura y metadatos del frame
             capture_interface = None
             frame_number = None
+            frame_protocols = None
+            
             if hasattr(packet, 'frame'):
-                if hasattr(packet.frame, 'interface_id'):
-                    capture_interface = packet.frame.interface_id
-                if hasattr(packet.frame, 'number'):
-                    frame_number = int(packet.frame.number)
+                frame = packet.frame
+                capture_interface = getattr(frame, 'interface_id', None)
+                frame_number = safe_int_convert(getattr(frame, 'number', None))
+                frame_protocols = getattr(frame, 'protocols', None)
         except AttributeError as e:
             print(f"Error accediendo a metadatos básicos del paquete #{packet_number}: {e}")
-            return
+            return False
 
         # Construir pila de protocolos
         protocol_stack = ",".join([layer.layer_name for layer in packet.layers])
@@ -194,7 +242,11 @@ class PCAPProcessor:
         # Inicializar todas las variables que poblaremos
         # Capa 2 - Ethernet
         src_mac = dst_mac = eth_type = None
+        eth_dst_lg = eth_dst_ig = eth_src_lg = eth_src_ig = None
         vlan_id = None
+        
+        # PPP
+        ppp_protocol = ppp_direction = None
         
         # Capa 3 - IP (común)
         ip_version = None
@@ -204,10 +256,12 @@ class PCAPProcessor:
         ip_header_length = ip_dscp = ip_ecn = ip_total_length = None
         ip_identification = ip_flags = ip_flag_df = ip_flag_mf = None
         ip_fragment_offset = ip_ttl = ip_protocol = ip_checksum = None
+        ip_options = None
         
         # Capa 3 - IPv6
         ipv6_traffic_class = ipv6_flow_label = ipv6_payload_length = None
         ipv6_next_header = ipv6_hop_limit = None
+        ipv6_ext_headers = None
         
         # Capa 4 - Común
         transport_protocol = None
@@ -218,1029 +272,391 @@ class PCAPProcessor:
         tcp_flag_ns = tcp_flag_cwr = tcp_flag_ece = tcp_flag_urg = False
         tcp_flag_ack = tcp_flag_psh = tcp_flag_rst = tcp_flag_syn = tcp_flag_fin = False
         tcp_window_size = tcp_window_size_scalefactor = tcp_checksum = tcp_urgent_pointer = None
-        tcp_options = tcp_mss = tcp_sack_permitted = tcp_ts_value = tcp_ts_echo = None
+        tcp_window_size_value = None  # Asegurar inicialización
+        tcp_options = None
+        tcp_mss = tcp_sack_permitted = tcp_ts_value = tcp_ts_echo = None
         tcp_stream_index = tcp_payload_size = tcp_analysis_flags = tcp_analysis_rtt = None
+        tcp_keep_alive = False
         
         # Capa 4 - UDP
         udp_length = udp_checksum = udp_stream_index = udp_payload_size = None
         
         # Capa 4 - ICMP
         icmp_type = icmp_code = icmp_checksum = icmp_identifier = None
-        icmp_sequence = icmp_gateway = icmp_length = None
+        icmp_sequence = icmp_gateway = icmp_length = icmp_mtu = icmp_unused = None
         
-        # Protocolos de capa 7 y superior
-        protocol = "UNKNOWN"
-        
-        # DNS
-        dns_query_name = dns_query_type = dns_response_ips = dns_record_ttl = None
-        
-        # HTTP
-        http_method = http_uri = http_host = http_user_agent = http_referer = None
-        http_response_code = http_content_type = None
-        
-        # TLS/SSL
-        tls_version = tls_cipher_suite = tls_server_name = None
-        
-        # ARP
+        # ARP específico
         arp_opcode = arp_src_hw = arp_dst_hw = arp_src_ip = arp_dst_ip = None
         
-        # DHCP
-        dhcp_message_type = dhcp_requested_ip = dhcp_client_mac = None
-        
-        # Información general
+        # Variables para información adicional
         info_text = None
-        is_error = is_malformed = False
+        is_error = False
+        is_malformed = False
 
-        # Extraer información de la capa Ethernet
-        if hasattr(packet, 'eth'):
-            try:
-                eth_layer = packet.eth
-                src_mac = eth_layer.src
-                dst_mac = eth_layer.dst
-                if hasattr(eth_layer, 'type'):
-                    eth_type = eth_layer.type
-            except AttributeError as e:
-                print(f"Error procesando capa Ethernet para paquete #{packet_number}: {e}")
-        
-        # Extraer información de VLAN si está presente
-        if hasattr(packet, 'vlan'):
-            try:
-                vlan_layer = packet.vlan
-                if hasattr(vlan_layer, 'id'):
-                    vlan_id = int(vlan_layer.id)
-            except (AttributeError, ValueError) as e:
-                print(f"Error procesando capa VLAN para paquete #{packet_number}: {e}")
-        
-        # Procesar capa IP (v4/v6)
-        ip_layer = None
-        if hasattr(packet, 'ip'):
-            ip_layer = packet.ip
-            ip_version = 4
-            transport_protocol = "IPv4"
-        elif hasattr(packet, 'ipv6'):
-            ip_layer = packet.ipv6
-            ip_version = 6
-            transport_protocol = "IPv6"
-        
-        # Extraer información detallada de IP
-        if ip_layer:
-            try:
-                src_ip = ip_layer.src
-                dst_ip = ip_layer.dst
+        # Procesamiento por capas
+        try:
+            # Procesar Ethernet (capa 2)
+            if hasattr(packet, 'eth'):
+                eth = packet.eth
+                src_mac = eth.src if hasattr(eth, 'src') else None
+                dst_mac = eth.dst if hasattr(eth, 'dst') else None
+                eth_type = eth.type if hasattr(eth, 'type') else None
                 
-                # IPv4 específico
+                # Algunos bits específicos Ethernet que pueden ser útiles
+                eth_dst_lg = bool(safe_int_convert(getattr(eth, 'dst_lg', None)))
+                eth_dst_ig = bool(safe_int_convert(getattr(eth, 'dst_ig', None)))
+                eth_src_lg = bool(safe_int_convert(getattr(eth, 'src_lg', None)))
+                eth_src_ig = bool(safe_int_convert(getattr(eth, 'src_ig', None)))
+            
+            # Procesar VLAN si existe
+            if hasattr(packet, 'vlan'):
+                vlan = packet.vlan
+                vlan_id = safe_int_convert(getattr(vlan, 'id', None))
+            
+            # Procesar PPP si existe
+            if hasattr(packet, 'ppp'):
+                ppp = packet.ppp
+                ppp_protocol = getattr(ppp, 'protocol', None)
+                ppp_direction = getattr(ppp, 'direction', None)
+            
+            # Procesar IP (versión 4 o 6)
+            if hasattr(packet, 'ip'):
+                ip = packet.ip
+                ip_version = safe_int_convert(getattr(ip, 'version', None))
+                src_ip = getattr(ip, 'src', None)
+                dst_ip = getattr(ip, 'dst', None)
+                
+                # Campos específicos IPv4
                 if ip_version == 4:
-                    # Header Length
-                    if hasattr(ip_layer, 'hdr_len'):
-                        ip_header_length = int(ip_layer.hdr_len)
-                        
-                    # DSCP & ECN (parte de ToS)
-                    if hasattr(ip_layer, 'dsfield'):
-                        try:
-                            dsfield = int(ip_layer.dsfield, 16)
-                            ip_dscp = dsfield >> 2  # 6 bits más significativos
-                            ip_ecn = dsfield & 0x03  # 2 bits menos significativos
-                        except (ValueError, TypeError):
-                            pass
+                    ip_header_length = safe_int_convert(getattr(ip, 'hdr_len', None))
+                    ip_dscp = safe_int_convert(getattr(ip, 'dsfield_dscp', None))
+                    ip_ecn = safe_int_convert(getattr(ip, 'dsfield_ecn', None))
+                    ip_total_length = safe_int_convert(getattr(ip, 'len', None))
+                    ip_identification = safe_int_convert(getattr(ip, 'id', None), 16)
                     
-                    # Total Length
-                    if hasattr(ip_layer, 'len'):
-                        ip_total_length = int(ip_layer.len)
-                        
-                    # Identification
-                    if hasattr(ip_layer, 'id'):
-                        try:
-                            ip_identification = int(ip_layer.id, 16)
-                        except (ValueError, TypeError):
-                            pass
+                    # Flags
+                    ip_flags = safe_int_convert(getattr(ip, 'flags', None), 16)
+                    ip_flag_df = bool(safe_int_convert(getattr(ip, 'flags_df', None)))
+                    ip_flag_mf = bool(safe_int_convert(getattr(ip, 'flags_mf', None)))
                     
-                    # Flags & Fragment Offset
-                    if hasattr(ip_layer, 'flags'):
-                        try:
-                            ip_flags = int(ip_layer.flags, 16)
-                            # El bit DF (Don't Fragment) es 0x4000
-                            ip_flag_df = bool(ip_flags & 0x4000)
-                            # El bit MF (More Fragments) es 0x2000
-                            ip_flag_mf = bool(ip_flags & 0x2000)
-                        except (ValueError, TypeError):
-                            pass
-                            
-                    if hasattr(ip_layer, 'frag_offset'):
-                        try:
-                            ip_fragment_offset = int(ip_layer.frag_offset)
-                        except (ValueError, TypeError):
-                            pass
+                    ip_fragment_offset = safe_int_convert(getattr(ip, 'frag_offset', None))
+                    ip_ttl = safe_int_convert(getattr(ip, 'ttl', None))
+                    ip_protocol = safe_int_convert(getattr(ip, 'proto', None))
+                    ip_checksum = getattr(ip, 'checksum', None)
                     
-                    # TTL
-                    if hasattr(ip_layer, 'ttl'):
-                        ip_ttl = int(ip_layer.ttl)
-                    
-                    # Protocol
-                    if hasattr(ip_layer, 'proto'):
-                        ip_protocol = int(ip_layer.proto)
-                    
-                    # Checksum
-                    if hasattr(ip_layer, 'checksum'):
-                        ip_checksum = ip_layer.checksum
+                    # Opcional: opciones IP
+                    ip_options = getattr(ip, 'opt', None)
                 
-                # IPv6 específico
-                elif ip_version == 6:
-                    # Traffic Class
-                    if hasattr(ip_layer, 'tclass'):
-                        try:
-                            ipv6_traffic_class = int(ip_layer.tclass, 16)
-                        except (ValueError, TypeError):
-                            pass
-                    
-                    # Flow Label
-                    if hasattr(ip_layer, 'flow'):
-                        try:
-                            ipv6_flow_label = int(ip_layer.flow, 16)
-                        except (ValueError, TypeError):
-                            pass
-                    
-                    # Payload Length
-                    if hasattr(ip_layer, 'plen'):
-                        ipv6_payload_length = int(ip_layer.plen)
-                    
-                    # Next Header
-                    if hasattr(ip_layer, 'nxt'):
-                        ipv6_next_header = int(ip_layer.nxt)
-                    
-                    # Hop Limit
-                    if hasattr(ip_layer, 'hlim'):
-                        ipv6_hop_limit = int(ip_layer.hlim)
+                # Campos específicos IPv6
+                elif ip_version == 6 and hasattr(packet, 'ipv6'):
+                    ipv6 = packet.ipv6
+                    ipv6_traffic_class = safe_int_convert(getattr(ipv6, 'tclass', None))
+                    ipv6_flow_label = safe_int_convert(getattr(ipv6, 'flow', None))
+                    ipv6_payload_length = safe_int_convert(getattr(ipv6, 'plen', None))
+                    ipv6_next_header = safe_int_convert(getattr(ipv6, 'nxt', None))
+                    ipv6_hop_limit = safe_int_convert(getattr(ipv6, 'hlim', None))
             
-            except AttributeError as e:
-                print(f"Error procesando capa IP para paquete #{packet_number}: {e}")
-            except ValueError as e:
-                print(f"Error de conversión en capa IP para paquete #{packet_number}: {e}")
-        
-        # Procesar capa de transporte (TCP, UDP, ICMP, ICMPv6)
-        
-        # TCP
-        if hasattr(packet, 'tcp'):
-            try:
-                tcp_layer = packet.tcp
-                transport_protocol = "TCP"
-                
-                # Puertos
-                src_port = int(tcp_layer.srcport)
-                dst_port = int(tcp_layer.dstport)
-                
-                # Números de secuencia y ACK
-                if hasattr(tcp_layer, 'seq'):
-                    tcp_seq_number = int(tcp_layer.seq)
-                if hasattr(tcp_layer, 'ack'):
-                    tcp_ack_number = int(tcp_layer.ack)
-                
-                # Longitud de cabecera
-                if hasattr(tcp_layer, 'hdr_len'):
-                    tcp_header_length = int(tcp_layer.hdr_len)
-                
-                # Flags TCP (como valor raw y desglosados)
-                if hasattr(tcp_layer, 'flags'):
-                    try:
-                        tcp_flags_raw = int(tcp_layer.flags, 16)
-                        # Desglosar flags individuales (orden: último bit es NS, primer bit es FIN)
-                        # NS (ECN-Nonce concealment protection) - 0x100
-                        tcp_flag_ns = bool(tcp_flags_raw & 0x100)
-                        # CWR (Congestion Window Reduced) - 0x80
-                        tcp_flag_cwr = bool(tcp_flags_raw & 0x80)
-                        # ECE (ECN-Echo) - 0x40
-                        tcp_flag_ece = bool(tcp_flags_raw & 0x40)
-                        # URG (Urgent) - 0x20
-                        tcp_flag_urg = bool(tcp_flags_raw & 0x20)
-                        # ACK (Acknowledgment) - 0x10
-                        tcp_flag_ack = bool(tcp_flags_raw & 0x10)
-                        # PSH (Push) - 0x8
-                        tcp_flag_psh = bool(tcp_flags_raw & 0x8)
-                        # RST (Reset) - 0x4
-                        tcp_flag_rst = bool(tcp_flags_raw & 0x4)
-                        # SYN (Synchronize) - 0x2
-                        tcp_flag_syn = bool(tcp_flags_raw & 0x2)
-                        # FIN (Finish) - 0x1
-                        tcp_flag_fin = bool(tcp_flags_raw & 0x1)
-                    except (ValueError, TypeError):
-                        pass
-                
-                # Window Size
-                if hasattr(tcp_layer, 'window_size_value'):
-                    tcp_window_size = int(tcp_layer.window_size_value)
-                elif hasattr(tcp_layer, 'window'):
-                    tcp_window_size = int(tcp_layer.window)
-                
-                # Checksum
-                if hasattr(tcp_layer, 'checksum'):
-                    tcp_checksum = tcp_layer.checksum
-                
-                # Urgent Pointer
-                if hasattr(tcp_layer, 'urgent_pointer'):
-                    tcp_urgent_pointer = int(tcp_layer.urgent_pointer)
-                
-                # Opciones TCP
-                tcp_options_parts = []
-                
-                # MSS (Maximum Segment Size)
-                if hasattr(tcp_layer, 'options_mss_val'):
-                    tcp_mss = int(tcp_layer.options_mss_val)
-                    tcp_options_parts.append(f"MSS={tcp_mss}")
-                
-                # SACK Permitted
-                if hasattr(tcp_layer, 'options_sack_perm'):
-                    tcp_sack_permitted = True
-                    tcp_options_parts.append("SACK_PERM=1")
-                
-                # Timestamps
-                if hasattr(tcp_layer, 'options_timestamp_tsval'):
-                    tcp_ts_value = int(tcp_layer.options_timestamp_tsval)
-                    tcp_options_parts.append(f"TSval={tcp_ts_value}")
-                if hasattr(tcp_layer, 'options_timestamp_tsecr'):
-                    tcp_ts_echo = int(tcp_layer.options_timestamp_tsecr)
-                    tcp_options_parts.append(f"TSecr={tcp_ts_echo}")
-                
-                # Window Scale
-                if hasattr(tcp_layer, 'options_wscale_val'):
-                    tcp_window_size_scalefactor = int(tcp_layer.options_wscale_val)
-                    tcp_options_parts.append(f"WS={tcp_window_size_scalefactor}")
-                
-                # Reunir opciones como string
-                if tcp_options_parts:
-                    tcp_options = "; ".join(tcp_options_parts)
-                
-                # Stream index
-                if hasattr(tcp_layer, 'stream'):
-                    tcp_stream_index = int(tcp_layer.stream)
-                
-                # Payload Size
-                if hasattr(tcp_layer, 'payload'):
-                    tcp_payload_size = len(tcp_layer.payload)
-                
-                # Análisis TCP (flags de análisis, RTT)
-                if hasattr(tcp_layer, 'analysis_flags'):
-                    tcp_analysis_flags = tcp_layer.analysis_flags
-                
-                if hasattr(tcp_layer, 'analysis_rtt'):
-                    try:
-                        tcp_analysis_rtt = float(tcp_layer.analysis_rtt)
-                    except (ValueError, TypeError):
-                        pass
-                
-                protocol = "TCP"  # Protocolo de alto nivel
-                
-            except AttributeError as e:
-                print(f"Error procesando capa TCP para paquete #{packet_number}: {e}")
-            except ValueError as e:
-                print(f"Error de conversión en capa TCP para paquete #{packet_number}: {e}")
-        
-        # UDP
-        elif hasattr(packet, 'udp'):
-            try:
-                udp_layer = packet.udp
-                transport_protocol = "UDP"
-                
-                # Puertos
-                src_port = int(udp_layer.srcport)
-                dst_port = int(udp_layer.dstport)
-                
-                # Longitud
-                if hasattr(udp_layer, 'length'):
-                    udp_length = int(udp_layer.length)
-                
-                # Checksum
-                if hasattr(udp_layer, 'checksum'):
-                    udp_checksum = udp_layer.checksum
-                
-                # Stream index
-                if hasattr(udp_layer, 'stream'):
-                    udp_stream_index = int(udp_layer.stream)
-                
-                # Payload Size - si es accesible
-                if hasattr(udp_layer, 'payload'):
-                    udp_payload_size = len(udp_layer.payload)
-                
-                protocol = "UDP"  # Protocolo de alto nivel
-                
-            except AttributeError as e:
-                print(f"Error procesando capa UDP para paquete #{packet_number}: {e}")
-            except ValueError as e:
-                print(f"Error de conversión en capa UDP para paquete #{packet_number}: {e}")
-        
-        # ICMP
-        elif hasattr(packet, 'icmp'):
-            try:
-                icmp_layer = packet.icmp
-                transport_protocol = "ICMP"
-                
-                # Type & Code
-                if hasattr(icmp_layer, 'type'):
-                    icmp_type = int(icmp_layer.type)
-                if hasattr(icmp_layer, 'code'):
-                    icmp_code = int(icmp_layer.code)
-                
-                # Checksum
-                if hasattr(icmp_layer, 'checksum'):
-                    try:
-                        icmp_checksum = icmp_layer.checksum
-                    except (ValueError, TypeError):
-                        pass
-                
-                # Identifier (para Echo Request/Reply)
-                if hasattr(icmp_layer, 'id'):
-                    try:
-                        icmp_identifier = int(icmp_layer.id)
-                    except (ValueError, TypeError):
-                        pass
-                
-                # Sequence Number (para Echo Request/Reply)
-                if hasattr(icmp_layer, 'seq'):
-                    try:
-                        icmp_sequence = int(icmp_layer.seq)
-                    except (ValueError, TypeError):
-                        pass
-                
-                # Gateway (para Redirect)
-                if hasattr(icmp_layer, 'gateway'):
-                    icmp_gateway = icmp_layer.gateway
-                
-                # Length (si está disponible)
-                if hasattr(icmp_layer, 'length'):
-                    try:
-                        icmp_length = int(icmp_layer.length)
-                    except (ValueError, TypeError):
-                        pass
-                
-                protocol = "ICMP"  # Protocolo de alto nivel
-                
-            except AttributeError as e:
-                print(f"Error procesando capa ICMP para paquete #{packet_number}: {e}")
-            except ValueError as e:
-                print(f"Error de conversión en capa ICMP para paquete #{packet_number}: {e}")
-        
-        # ICMPv6
-        elif hasattr(packet, 'icmpv6'):
-            try:
-                icmpv6_layer = packet.icmpv6
-                transport_protocol = "ICMPv6"
-                
-                # Type & Code
-                if hasattr(icmpv6_layer, 'type'):
-                    icmp_type = int(icmpv6_layer.type)
-                if hasattr(icmpv6_layer, 'code'):
-                    icmp_code = int(icmpv6_layer.code)
-                
-                # Checksum
-                if hasattr(icmpv6_layer, 'checksum'):
-                    try:
-                        icmp_checksum = icmpv6_layer.checksum
-                    except (ValueError, TypeError):
-                        pass
-                
-                protocol = "ICMPv6"  # Protocolo de alto nivel
-                
-            except AttributeError as e:
-                print(f"Error procesando capa ICMPv6 para paquete #{packet_number}: {e}")
-            except ValueError as e:
-                print(f"Error de conversión en capa ICMPv6 para paquete #{packet_number}: {e}")
-        
-        # ARP
-        elif hasattr(packet, 'arp'):
-            try:
-                arp_layer = packet.arp
-                transport_protocol = "ARP"
-                
-                # Opcode
-                if hasattr(arp_layer, 'opcode'):
-                    arp_opcode = int(arp_layer.opcode)
-                
-                # MAC addresses
-                if hasattr(arp_layer, 'src_hw_mac'):
-                    arp_src_hw = arp_layer.src_hw_mac
-                if hasattr(arp_layer, 'dst_hw_mac'):
-                    arp_dst_hw = arp_layer.dst_hw_mac
-                
-                # IP addresses
-                if hasattr(arp_layer, 'src_proto_ipv4'):
-                    arp_src_ip = arp_layer.src_proto_ipv4
-                if hasattr(arp_layer, 'dst_proto_ipv4'):
-                    arp_dst_ip = arp_layer.dst_proto_ipv4
-                
-                protocol = "ARP"  # Protocolo de alto nivel
-                
-                # Info text
-                arp_action = "request" if arp_opcode == 1 else "reply"
-                info_text = f"ARP {arp_action} {arp_src_ip} -> {arp_dst_ip}"
-                
-            except AttributeError as e:
-                print(f"Error procesando capa ARP para paquete #{packet_number}: {e}")
-            except ValueError as e:
-                print(f"Error de conversión en capa ARP para paquete #{packet_number}: {e}")
-        
-        # Protocolos de aplicación (L7)
-        
-        # DNS
-        if hasattr(packet, 'dns'):
-            try:
-                dns_layer = packet.dns
-                
-                # Consulta DNS
-                if hasattr(dns_layer, 'qry_name'):
-                    dns_query_name = dns_layer.qry_name
-                    if hasattr(dns_layer, 'qry_type'):
-                        dns_query_type = self._get_dns_type_name(dns_layer.qry_type)
-                
-                # Respuesta DNS
-                ips = []
-                if hasattr(dns_layer, 'a'):
-                    if isinstance(dns_layer.a, str) and ',' in dns_layer.a:
-                        ips.extend(dns_layer.a.split(','))
-                    else:
-                        try:
-                            ips.append(str(dns_layer.a))
-                        except TypeError:
-                            try:
-                                ips.extend(list(dns_layer.a))
-                            except (TypeError, ValueError):
-                                pass
-                
-                # IPv6 AAAA records
-                if hasattr(dns_layer, 'aaaa'):
-                    if isinstance(dns_layer.aaaa, str) and ',' in dns_layer.aaaa:
-                        ips.extend(dns_layer.aaaa.split(','))
-                    else:
-                        try:
-                            ips.append(str(dns_layer.aaaa))
-                        except TypeError:
-                            try:
-                                ips.extend(list(dns_layer.aaaa))
-                            except (TypeError, ValueError):
-                                pass
-                
-                # Combinar IPs
-                if ips:
-                    dns_response_ips = ",".join([ip for ip in ips if ip])
-                
-                # TTL del registro
-                if hasattr(dns_layer, 'a_ttl'):
-                    try:
-                        dns_record_ttl = int(dns_layer.a_ttl)
-                    except (ValueError, TypeError):
-                        pass
-                
-                # Cambiar el protocolo a DNS si no tenemos uno mejor
-                if protocol in ["TCP", "UDP"]:
-                    protocol = "DNS"
-                
-                # Info Text
-                if dns_query_name:
-                    info_text = f"DNS Query: {dns_query_name} ({dns_query_type})"
-                elif dns_response_ips:
-                    info_text = f"DNS Response: {dns_query_name} -> {dns_response_ips}"
-                
-            except AttributeError as e:
-                print(f"Error procesando capa DNS para paquete #{packet_number}: {e}")
-        
-        # HTTP
-        if hasattr(packet, 'http'):
-            try:
-                http_layer = packet.http
-                
-                # Método HTTP (solicitud)
-                if hasattr(http_layer, 'request_method'):
-                    http_method = http_layer.request_method
-                    protocol = "HTTP"
-                
-                # URI (solicitud)
-                if hasattr(http_layer, 'request_uri'):
-                    http_uri = http_layer.request_uri
-                
-                # Host (solicitud)
-                if hasattr(http_layer, 'host'):
-                    http_host = http_layer.host
-                
-                # User-Agent (solicitud)
-                if hasattr(http_layer, 'user_agent'):
-                    http_user_agent = http_layer.user_agent
-                
-                # Referer (solicitud)
-                if hasattr(http_layer, 'referer'):
-                    http_referer = http_layer.referer
-                
-                # Código de respuesta
-                if hasattr(http_layer, 'response_code'):
-                    try:
-                        http_response_code = int(http_layer.response_code)
-                        protocol = "HTTP"
-                    except (ValueError, TypeError):
-                        pass
-                
-                # Content-Type (respuesta)
-                if hasattr(http_layer, 'content_type'):
-                    http_content_type = http_layer.content_type
-                
-                # Info Text
-                if http_method and http_uri:
-                    info_text = f"HTTP {http_method} {http_uri}"
-                elif http_response_code:
-                    info_text = f"HTTP Response {http_response_code}"
-                    if http_content_type:
-                        info_text += f" ({http_content_type})"
-                
-            except AttributeError as e:
-                print(f"Error procesando capa HTTP para paquete #{packet_number}: {e}")
-        
-        # TLS/SSL
-        if hasattr(packet, 'tls') or hasattr(packet, 'ssl'):
-            try:
-                ssl_layer = packet.tls if hasattr(packet, 'tls') else packet.ssl
-                
-                # Versión
-                if hasattr(ssl_layer, 'record_version'):
-                    tls_version = ssl_layer.record_version
-                elif hasattr(ssl_layer, 'handshake_version'):
-                    tls_version = ssl_layer.handshake_version
-                
-                # Cipher Suite
-                if hasattr(ssl_layer, 'handshake_ciphersuite'):
-                    tls_cipher_suite = ssl_layer.handshake_ciphersuite
-                
-                # SNI (Server Name Indication)
-                if hasattr(ssl_layer, 'handshake_extensions_server_name'):
-                    tls_server_name = ssl_layer.handshake_extensions_server_name
-                
-                protocol = "TLS/SSL"
-                
-                # Info Text
-                if tls_version:
-                    info_text = f"TLS {tls_version}"
-                    if tls_server_name:
-                        info_text += f" (SNI: {tls_server_name})"
-                
-            except AttributeError as e:
-                print(f"Error procesando capa TLS/SSL para paquete #{packet_number}: {e}")
-        
-        # DHCP
-        if hasattr(packet, 'dhcp'):
-            try:
-                dhcp_layer = packet.dhcp
-                
-                # Tipo de mensaje
-                if hasattr(dhcp_layer, 'option_dhcp'):
-                    dhcp_message_type = dhcp_layer.option_dhcp
-                
-                # IP solicitada
-                if hasattr(dhcp_layer, 'option_requested_ip_address'):
-                    dhcp_requested_ip = dhcp_layer.option_requested_ip_address
-                
-                # MAC del cliente
-                if hasattr(dhcp_layer, 'hw_mac_addr'):
-                    dhcp_client_mac = dhcp_layer.hw_mac_addr
-                
-                protocol = "DHCP"
-                
-                # Info Text
-                if dhcp_message_type:
-                    info_text = f"DHCP {dhcp_message_type}"
-                    if dhcp_requested_ip:
-                        info_text += f" for {dhcp_requested_ip}"
-                
-            except AttributeError as e:
-                print(f"Error procesando capa DHCP para paquete #{packet_number}: {e}")
-        
-        # Si no hay texto informativo, usar el protocolo o el nivel más alto
-        if not info_text and hasattr(packet, 'highest_layer'):
-            highest_layer = packet.highest_layer
-            if highest_layer and highest_layer != protocol:
-                info_text = f"{highest_layer} Packet"
-            else:
-                info_text = f"{protocol} Packet"
-        
-        # Detectar paquetes malformados o con errores
-        for layer in packet.layers:
-            layer_name = layer.layer_name.lower()
-            if 'malformed' in layer_name or 'error' in layer_name:
-                is_malformed = True
-                is_error = True
-                if not info_text or not info_text.startswith("ERROR:"):
-                    info_text = f"ERROR: Malformed packet - {layer.layer_name}"
-                break
-        
-        # Crear el objeto Packet con toda la información recopilada
-        new_packet = Packet(
-            session_id=capture_session.id,
-            packet_number=packet_number,
-            timestamp=timestamp,
-            capture_length=capture_length,
-            packet_length=packet_length,
-            capture_interface=capture_interface,
-            frame_number=frame_number,
-            delta_time=delta_time,
+            elif hasattr(packet, 'ipv6'):  # A veces no hay capa 'ip' sino directamente 'ipv6'
+                ipv6 = packet.ipv6
+                ip_version = 6
+                src_ip = getattr(ipv6, 'src', None)
+                dst_ip = getattr(ipv6, 'dst', None)
+                ipv6_traffic_class = safe_int_convert(getattr(ipv6, 'tclass', None))
+                ipv6_flow_label = safe_int_convert(getattr(ipv6, 'flow', None))
+                ipv6_payload_length = safe_int_convert(getattr(ipv6, 'plen', None))
+                ipv6_next_header = safe_int_convert(getattr(ipv6, 'nxt', None))
+                ipv6_hop_limit = safe_int_convert(getattr(ipv6, 'hlim', None))
             
-            # Ethernet (L2)
-            src_mac=src_mac,
-            dst_mac=dst_mac,
-            eth_type=eth_type,
-            vlan_id=vlan_id,
+            # Procesar ARP
+            if hasattr(packet, 'arp'):
+                arp = packet.arp
+                arp_opcode = safe_int_convert(getattr(arp, 'opcode', None))
+                arp_src_hw = getattr(arp, 'src_hw_mac', None)
+                arp_dst_hw = getattr(arp, 'dst_hw_mac', None)
+                arp_src_ip = getattr(arp, 'src_proto_ipv4', None)
+                arp_dst_ip = getattr(arp, 'dst_proto_ipv4', None)
             
-            # IP (L3) - común
-            ip_version=ip_version,
-            src_ip=src_ip,
-            dst_ip=dst_ip,
+            # Procesar TCP
+            if hasattr(packet, 'tcp'):
+                tcp = packet.tcp
+                transport_protocol = 'TCP'
+                
+                src_port = safe_int_convert(getattr(tcp, 'srcport', None))
+                dst_port = safe_int_convert(getattr(tcp, 'dstport', None))
+                
+                tcp_seq_number = safe_int_convert(getattr(tcp, 'seq', None))
+                tcp_ack_number = safe_int_convert(getattr(tcp, 'ack', None))
+                tcp_header_length = safe_int_convert(getattr(tcp, 'hdr_len', None))
+                
+                # TCP Flags (como valor raw)
+                tcp_flags_raw = safe_int_convert(getattr(tcp, 'flags', None), 16)
+                
+                # Flags individuales
+                tcp_flag_ns = bool(safe_int_convert(getattr(tcp, 'flags_ns', None)))
+                tcp_flag_cwr = bool(safe_int_convert(getattr(tcp, 'flags_cwr', None)))
+                tcp_flag_ece = bool(safe_int_convert(getattr(tcp, 'flags_ecn', None)))
+                tcp_flag_urg = bool(safe_int_convert(getattr(tcp, 'flags_urg', None)))
+                tcp_flag_ack = bool(safe_int_convert(getattr(tcp, 'flags_ack', None)))
+                tcp_flag_psh = bool(safe_int_convert(getattr(tcp, 'flags_push', None)))
+                tcp_flag_rst = bool(safe_int_convert(getattr(tcp, 'flags_reset', None)))
+                tcp_flag_syn = bool(safe_int_convert(getattr(tcp, 'flags_syn', None)))
+                tcp_flag_fin = bool(safe_int_convert(getattr(tcp, 'flags_fin', None)))
+                
+                # Window y otros campos
+                tcp_window_size = safe_int_convert(getattr(tcp, 'window_size', None))
+                tcp_window_size_value = safe_int_convert(getattr(tcp, 'window_size_value', None))
+                tcp_window_size_scalefactor = safe_int_convert(getattr(tcp, 'window_size_scalefactor', None))
+                
+                tcp_checksum = getattr(tcp, 'checksum', None)
+                tcp_urgent_pointer = safe_int_convert(getattr(tcp, 'urgent_pointer', None))
+                
+                # Opciones TCP (representación de texto o JSON)
+                tcp_options = getattr(tcp, 'options', None)
+                
+                # Opciones específicas comunes
+                tcp_mss = safe_int_convert(getattr(tcp, 'options_mss_val', None))
+                tcp_sack_permitted = bool(safe_int_convert(getattr(tcp, 'options_sack_perm', None)))
+                tcp_ts_value = safe_int_convert(getattr(tcp, 'options_timestamp_tsval', None))
+                tcp_ts_echo = safe_int_convert(getattr(tcp, 'options_timestamp_tsecr', None))
+                
+                # Análisis adicional TCP (fields from tcp.analysis)
+                tcp_stream_index = safe_int_convert(getattr(tcp, 'stream', None))
+                tcp_payload_size = safe_int_convert(getattr(tcp, 'len', None))
+                tcp_analysis_flags = getattr(tcp, 'analysis_flags', None)
+                tcp_analysis_rtt = safe_int_convert(getattr(tcp, 'analysis_rtt', None), default=0.0)
+                tcp_keep_alive = bool(safe_int_convert(getattr(tcp, 'analysis_keep_alive', None)))
             
-            # IPv4 específico
-            ip_header_length=ip_header_length,
-            ip_dscp=ip_dscp,
-            ip_ecn=ip_ecn,
-            ip_total_length=ip_total_length,
-            ip_identification=ip_identification,
-            ip_flags=ip_flags,
-            ip_flag_df=ip_flag_df,
-            ip_flag_mf=ip_flag_mf,
-            ip_fragment_offset=ip_fragment_offset,
-            ip_ttl=ip_ttl,
-            ip_protocol=ip_protocol,
-            ip_checksum=ip_checksum,
+            # Procesar UDP
+            elif hasattr(packet, 'udp'):
+                udp = packet.udp
+                transport_protocol = 'UDP'
+                
+                src_port = safe_int_convert(getattr(udp, 'srcport', None))
+                dst_port = safe_int_convert(getattr(udp, 'dstport', None))
+                
+                udp_length = safe_int_convert(getattr(udp, 'length', None))
+                udp_checksum = getattr(udp, 'checksum', None)
+                
+                udp_stream_index = safe_int_convert(getattr(udp, 'stream', None))
+                udp_payload_size = len(getattr(udp, 'payload', b''))
             
-            # IPv6 específico
-            ipv6_traffic_class=ipv6_traffic_class,
-            ipv6_flow_label=ipv6_flow_label,
-            ipv6_payload_length=ipv6_payload_length,
-            ipv6_next_header=ipv6_next_header,
-            ipv6_hop_limit=ipv6_hop_limit,
+            # Procesar ICMP
+            elif hasattr(packet, 'icmp'):
+                icmp = packet.icmp
+                transport_protocol = 'ICMP'
+                
+                icmp_type = safe_int_convert(getattr(icmp, 'type', None))
+                icmp_code = safe_int_convert(getattr(icmp, 'code', None))
+                icmp_checksum = getattr(icmp, 'checksum', None)
+                
+                # Campos comunes para ciertos tipos de mensajes ICMP
+                icmp_identifier = safe_int_convert(getattr(icmp, 'identifier', None))
+                icmp_sequence = safe_int_convert(getattr(icmp, 'seq', None))
+                icmp_gateway = getattr(icmp, 'gateway', None)
+                icmp_length = safe_int_convert(getattr(icmp, 'length', None))
+                icmp_mtu = safe_int_convert(getattr(icmp, 'mtu', None))
+                icmp_unused = safe_int_convert(getattr(icmp, 'unused', None))
             
-            # Transporte (L4) común
-            transport_protocol=transport_protocol,
-            src_port=src_port,
-            dst_port=dst_port,
+            # Procesar ICMPv6
+            elif hasattr(packet, 'icmpv6'):
+                icmpv6 = packet.icmpv6
+                transport_protocol = 'ICMPv6'
+                
+                icmp_type = safe_int_convert(getattr(icmpv6, 'type', None))
+                icmp_code = safe_int_convert(getattr(icmpv6, 'code', None))
+                icmp_checksum = getattr(icmpv6, 'checksum', None)
+                
+                # Campos comunes para ciertos tipos de mensajes ICMPv6
+                icmp_identifier = safe_int_convert(getattr(icmpv6, 'identifier', None))
+                icmp_sequence = safe_int_convert(getattr(icmpv6, 'seq', None))
             
-            # TCP específico
-            tcp_seq_number=tcp_seq_number,
-            tcp_ack_number=tcp_ack_number,
-            tcp_header_length=tcp_header_length,
-            tcp_flags_raw=tcp_flags_raw,
-            tcp_flag_ns=tcp_flag_ns,
-            tcp_flag_cwr=tcp_flag_cwr,
-            tcp_flag_ece=tcp_flag_ece,
-            tcp_flag_urg=tcp_flag_urg,
-            tcp_flag_ack=tcp_flag_ack,
-            tcp_flag_psh=tcp_flag_psh,
-            tcp_flag_rst=tcp_flag_rst,
-            tcp_flag_syn=tcp_flag_syn,
-            tcp_flag_fin=tcp_flag_fin,
-            tcp_window_size=tcp_window_size,
-            tcp_window_size_scalefactor=tcp_window_size_scalefactor,
-            tcp_checksum=tcp_checksum,
-            tcp_urgent_pointer=tcp_urgent_pointer,
-            tcp_options=tcp_options,
-            tcp_mss=tcp_mss,
-            tcp_sack_permitted=tcp_sack_permitted,
-            tcp_ts_value=tcp_ts_value,
-            tcp_ts_echo=tcp_ts_echo,
-            tcp_stream_index=tcp_stream_index,
-            tcp_payload_size=tcp_payload_size,
-            tcp_analysis_flags=tcp_analysis_flags,
-            tcp_analysis_rtt=tcp_analysis_rtt,
+            # Información de texto
+            info_text = getattr(packet, 'info', None)
             
-            # UDP específico
-            udp_length=udp_length,
-            udp_checksum=udp_checksum,
-            udp_stream_index=udp_stream_index,
-            udp_payload_size=udp_payload_size,
-            
-            # ICMP específico
-            icmp_type=icmp_type,
-            icmp_code=icmp_code,
-            icmp_checksum=icmp_checksum,
-            icmp_identifier=icmp_identifier,
-            icmp_sequence=icmp_sequence,
-            icmp_gateway=icmp_gateway,
-            icmp_length=icmp_length,
-            
-            # Capa 7 (Aplicación)
-            protocol=protocol,
-            
-            # DNS
-            dns_query_name=dns_query_name,
-            dns_query_type=dns_query_type,
-            dns_response_ips=dns_response_ips,
-            dns_record_ttl=dns_record_ttl,
-            
-            # HTTP
-            http_method=http_method,
-            http_uri=http_uri,
-            http_host=http_host,
-            http_user_agent=http_user_agent,
-            http_referer=http_referer,
-            http_response_code=http_response_code,
-            http_content_type=http_content_type,
-            
-            # TLS/SSL
-            tls_version=tls_version,
-            tls_cipher_suite=tls_cipher_suite,
-            tls_server_name=tls_server_name,
-            
-            # ARP
-            arp_opcode=arp_opcode,
-            arp_src_hw=arp_src_hw,
-            arp_dst_hw=arp_dst_hw,
-            arp_src_ip=arp_src_ip,
-            arp_dst_ip=arp_dst_ip,
-            
-            # DHCP
-            dhcp_message_type=dhcp_message_type,
-            dhcp_requested_ip=dhcp_requested_ip,
-            dhcp_client_mac=dhcp_client_mac,
-            
-            # Campos generales
-            info_text=info_text,
-            is_error=is_error,
-            is_malformed=is_malformed,
-            protocol_stack=protocol_stack
-        )
+        except Exception as e:
+            print(f"Error durante el procesamiento de capas del paquete #{packet_number}: {e}")
+            info_text = f"Error de procesamiento: {e}"
+            is_error = True
         
-        # Añadir a la sesión y obtener el ID
-        db_session.add(new_packet)
-        db_session.flush()
-        
-        # Detectar anomalías
-        self._detect_anomalies(db_session, new_packet, packet)
-    
-    def _get_dns_type_name(self, qtype):
-        """
-        Convierte un tipo numérico de consulta DNS a su nombre correspondiente.
-        """
-        dns_types = {
-            "1": "A",
-            "2": "NS",
-            "5": "CNAME",
-            "6": "SOA",
-            "12": "PTR",
-            "15": "MX",
-            "16": "TXT",
-            "28": "AAAA",
-            "33": "SRV"
-        }
-        # Puede ser un entero, una cadena, o tener formato diferente
-        type_str = str(qtype)
-        return dns_types.get(type_str, type_str)
-
-    def _process_tcp_packet(self, db_session, packet, tcp_layer):
-        """
-        Procesa un paquete TCP (PyShark) y almacena la información TCP.
-        """
+        # Crear un nuevo objeto Packet
         try:
-            flags = int(tcp_layer.flags, 16) if hasattr(tcp_layer, 'flags') else 0
-            tcp_info = TCPInfo(
-                packet_id=packet.id,
-                src_port=int(tcp_layer.srcport),
-                dst_port=int(tcp_layer.dstport),
-                seq_number=int(tcp_layer.seq) if hasattr(tcp_layer, 'seq') else None,
-                ack_number=int(tcp_layer.ack) if hasattr(tcp_layer, 'ack') else None,
-                window_size=int(tcp_layer.window_size_value) if hasattr(tcp_layer, 'window_size_value') else None,
-                header_length=int(tcp_layer.hdr_len) if hasattr(tcp_layer, 'hdr_len') else None,
-                flag_syn=(flags & 0x02) != 0,
-                flag_ack=(flags & 0x10) != 0,
-                flag_fin=(flags & 0x01) != 0,
-                flag_rst=(flags & 0x04) != 0,
-                flag_psh=(flags & 0x08) != 0,
-                flag_urg=(flags & 0x20) != 0,
-                flag_ece=(flags & 0x40) != 0,
-                flag_cwr=(flags & 0x80) != 0,
-                has_timestamp=hasattr(tcp_layer, 'options_timestamp_tsval'),
-                timestamp_value=int(tcp_layer.options_timestamp_tsval) if hasattr(tcp_layer, 'options_timestamp_tsval') else None,
-                timestamp_echo=int(tcp_layer.options_timestamp_tsecr) if hasattr(tcp_layer, 'options_timestamp_tsecr') else None,
-                mss=int(tcp_layer.options_mss_val) if hasattr(tcp_layer, 'options_mss_val') else None,
-                window_scale=int(tcp_layer.options_wscale_val) if hasattr(tcp_layer, 'options_wscale_val') else None
-            )
-            db_session.add(tcp_info)
-        except AttributeError as e:
-            print(f"Error processing TCP details for packet {packet.id}: {e}")
-        except ValueError as e:
-             print(f"Error converting TCP value for packet {packet.id}: {e}")
-
-    def _process_udp_packet(self, db_session, packet, udp_layer):
-        """
-        Procesa un paquete UDP (PyShark) y almacena la información UDP.
-        """
-        try:
-            udp_info = UDPInfo(
-                packet_id=packet.id,
-                src_port=int(udp_layer.srcport),
-                dst_port=int(udp_layer.dstport),
-                length=int(udp_layer.length) if hasattr(udp_layer, 'length') else None
-            )
-            db_session.add(udp_info)
-        except AttributeError as e:
-            print(f"Error processing UDP details for packet {packet.id}: {e}")
-        except ValueError as e:
-             print(f"Error converting UDP value for packet {packet.id}: {e}")
-
-    def _process_icmp_packet(self, db_session, packet, icmp_layer, protocol):
-        """
-        Procesa un paquete ICMP (PyShark) y almacena la información ICMP.
-        """
-        icmp_types = { 0: "Echo Reply", 3: "Destination Unreachable" }
-        icmpv6_types = { 1: "Destination Unreachable", 2: "Packet Too Big" }
-        try:
-            icmp_type = int(icmp_layer.type) if hasattr(icmp_layer, 'type') else 0
-            icmp_code = int(icmp_layer.code) if hasattr(icmp_layer, 'code') else 0
-            
-            if protocol == 'ICMP':
-                icmp_type_name = icmp_types.get(icmp_type, "Unknown")
-            else:
-                icmp_type_name = icmpv6_types.get(icmp_type, "Unknown")
+            new_packet = Packet(
+                session_id=capture_session.id,
+                packet_number=packet_number,
+                timestamp=timestamp,
+                capture_length=capture_length,
+                packet_length=packet_length,
+                capture_interface=capture_interface,
+                frame_number=frame_number,
                 
-            icmp_info = ICMPInfo(
-                packet_id=packet.id,
+                # Capa 2 - Ethernet
+                src_mac=src_mac,
+                dst_mac=dst_mac,
+                eth_type=eth_type,
+                eth_dst_lg=eth_dst_lg,
+                eth_dst_ig=eth_dst_ig,
+                eth_src_lg=eth_src_lg,
+                eth_src_ig=eth_src_ig,
+                vlan_id=vlan_id,
+                
+                # PPP
+                ppp_protocol=ppp_protocol,
+                ppp_direction=ppp_direction,
+                
+                # Capa 3 - IP (común)
+                ip_version=ip_version,
+                src_ip=src_ip,
+                dst_ip=dst_ip,
+                
+                # Capa 3 - IPv4 específico
+                ip_header_length=ip_header_length,
+                ip_dscp=ip_dscp,
+                ip_ecn=ip_ecn,
+                ip_total_length=ip_total_length,
+                ip_identification=ip_identification,
+                ip_flags=ip_flags,
+                ip_flag_df=ip_flag_df,
+                ip_flag_mf=ip_flag_mf,
+                ip_fragment_offset=ip_fragment_offset,
+                ip_ttl=ip_ttl,
+                ip_protocol=ip_protocol,
+                ip_checksum=ip_checksum,
+                ip_options=ip_options,
+                
+                # Capa 3 - IPv6 específico
+                ipv6_traffic_class=ipv6_traffic_class,
+                ipv6_flow_label=ipv6_flow_label,
+                ipv6_payload_length=ipv6_payload_length,
+                ipv6_next_header=ipv6_next_header,
+                ipv6_hop_limit=ipv6_hop_limit,
+                ipv6_ext_headers=ipv6_ext_headers,
+                
+                # Capa 4 - Común
+                transport_protocol=transport_protocol,
+                src_port=src_port,
+                dst_port=dst_port,
+                
+                # Capa 4 - TCP específico
+                tcp_seq_number=tcp_seq_number,
+                tcp_ack_number=tcp_ack_number,
+                tcp_header_length=tcp_header_length,
+                tcp_flags_raw=tcp_flags_raw,
+                tcp_flag_ns=tcp_flag_ns,
+                tcp_flag_cwr=tcp_flag_cwr,
+                tcp_flag_ece=tcp_flag_ece,
+                tcp_flag_urg=tcp_flag_urg,
+                tcp_flag_ack=tcp_flag_ack,
+                tcp_flag_psh=tcp_flag_psh,
+                tcp_flag_rst=tcp_flag_rst,
+                tcp_flag_syn=tcp_flag_syn,
+                tcp_flag_fin=tcp_flag_fin,
+                tcp_window_size=tcp_window_size,
+                tcp_window_size_scalefactor=tcp_window_size_scalefactor,
+                tcp_window_size_value=tcp_window_size_value,
+                tcp_checksum=tcp_checksum,
+                tcp_urgent_pointer=tcp_urgent_pointer,
+                tcp_options=tcp_options,
+                tcp_mss=tcp_mss,
+                tcp_sack_permitted=tcp_sack_permitted,
+                tcp_ts_value=tcp_ts_value,
+                tcp_ts_echo=tcp_ts_echo,
+                tcp_stream_index=tcp_stream_index,
+                tcp_payload_size=tcp_payload_size,
+                tcp_analysis_flags=tcp_analysis_flags,
+                tcp_analysis_rtt=tcp_analysis_rtt,
+                tcp_keep_alive=tcp_keep_alive,
+                
+                # Capa 4 - UDP específico
+                udp_length=udp_length,
+                udp_checksum=udp_checksum,
+                udp_stream_index=udp_stream_index,
+                udp_payload_size=udp_payload_size,
+                
+                # Capa 4 - ICMP específico
                 icmp_type=icmp_type,
                 icmp_code=icmp_code,
-                icmp_type_name=icmp_type_name,
-                checksum=int(icmp_layer.checksum, 16) if hasattr(icmp_layer, 'checksum') else None,
-                identifier=int(icmp_layer.id) if hasattr(icmp_layer, 'id') else None, 
-                sequence_number=int(icmp_layer.seq) if hasattr(icmp_layer, 'seq') else None
-            )
-            db_session.add(icmp_info)
-        except AttributeError as e:
-            print(f"Error processing ICMP details for packet {packet.id}: {e}")
-        except ValueError as e:
-             print(f"Error converting ICMP value for packet {packet.id}: {e}")
-
-    def _detect_anomalies(self, db_session, packet, pyshark_packet=None):
-        """
-        Detecta posibles anomalías en un paquete. 
-        
-        Args:
-            db_session: Sesión de base de datos activa
-            packet: Objeto Packet de SQLAlchemy (ya tiene todos los campos populados)
-            pyshark_packet: (opcional) Objeto de paquete de PyShark original
-        """
-        anomalies = []
-        
-        # Anomalías basadas en campos de TCP
-        if packet.protocol == 'TCP':
-            # Usar tcp_flags_raw si está disponible, o inferir desde flags individuales
-            if packet.tcp_flags_raw is not None:
-                tcp_flags = packet.tcp_flags_raw
-            else:
-                tcp_flags = 0
-                if packet.tcp_flag_fin: tcp_flags |= 0x01
-                if packet.tcp_flag_syn: tcp_flags |= 0x02
-                if packet.tcp_flag_rst: tcp_flags |= 0x04
-                if packet.tcp_flag_psh: tcp_flags |= 0x08
-                if packet.tcp_flag_ack: tcp_flags |= 0x10
-                if packet.tcp_flag_urg: tcp_flags |= 0x20
-                if packet.tcp_flag_ece: tcp_flags |= 0x40
-                if packet.tcp_flag_cwr: tcp_flags |= 0x80
-                if packet.tcp_flag_ns:  tcp_flags |= 0x100
+                icmp_checksum=icmp_checksum,
+                icmp_identifier=icmp_identifier,
+                icmp_sequence=icmp_sequence,
+                icmp_gateway=icmp_gateway,
+                icmp_length=icmp_length,
+                icmp_mtu=icmp_mtu,
+                icmp_unused=icmp_unused,
                 
-            # Escaneo Xmas (FIN, PSH, URG flags activos, otros inactivos)
-            if (tcp_flags & 0x29) == 0x29 and not (tcp_flags & 0x16):
-                anomalies.append(
-                    Anomaly(
-                        packet_id=packet.id,
-                        type="Xmas Scan",
-                        description="Posible escaneo Xmas detectado (FIN+PSH+URG flags activos)",
-                        severity="alta"
-                    )
-                )
-            
-            # Escaneo NULL (ningún flag activo)
-            if tcp_flags == 0:
-                anomalies.append(
-                    Anomaly(
-                        packet_id=packet.id,
-                        type="NULL Scan",
-                        description="Posible escaneo NULL detectado (ningún flag TCP activo)",
-                        severity="alta"
-                    )
-                )
+                # ARP específico
+                arp_opcode=arp_opcode,
+                arp_src_hw=arp_src_hw,
+                arp_dst_hw=arp_dst_hw,
+                arp_src_ip=arp_src_ip,
+                arp_dst_ip=arp_dst_ip,
                 
-            # Combinación inválida de flags SYN+FIN
-            if (tcp_flags & 0x03) == 0x03:
-                anomalies.append(
-                    Anomaly(
-                        packet_id=packet.id,
-                        type="Invalid Flags",
-                        description="Combinación inválida de flags TCP (SYN+FIN)",
-                        severity="media"
-                    )
-                )
+                # Metadatos adicionales
+                delta_time=delta_time,
                 
-            # Combinación inválida de flags RST+SYN (menos común pero posible ataque)
-            if (tcp_flags & 0x06) == 0x06:
-                anomalies.append(
-                    Anomaly(
-                        packet_id=packet.id,
-                        type="Invalid Flags",
-                        description="Combinación inválida de flags TCP (RST+SYN)",
-                        severity="media"
-                    )
-                )
-                
-            # RST flood (requeriría contexto adicional, pero podemos marcar para futura detección)
-            if packet.tcp_flag_rst and not (packet.tcp_flag_ack or packet.tcp_flag_syn):
-                # Aquí podríamos agregar lógica para detectar patrones de RST flood si agregamos análisis entre distintos paquetes
-                pass
-                
-            # Flags TCP todos activos (altamente sospechoso)
-            if tcp_flags == 0x1FF:  # Todos los 9 flags TCP activados
-                anomalies.append(
-                    Anomaly(
-                        packet_id=packet.id,
-                        type="All TCP Flags",
-                        description="Paquete con todos los flags TCP activos (altamente sospechoso)",
-                        severity="alta"
-                    )
-                )
-        
-        # Fragmentación sospechosa
-        if packet.ip_flag_mf or (packet.ip_fragment_offset is not None and packet.ip_fragment_offset > 0):
-            # Fragmento con offset muy pequeño (puede ser usado para evasión)
-            if packet.ip_fragment_offset == 1:
-                anomalies.append(
-                    Anomaly(
-                        packet_id=packet.id,
-                        type="Suspicious Fragment",
-                        description="Fragmento con offset sospechosamente pequeño (1 byte)",
-                        severity="media"
-                    )
-                )
-                
-            # Fragmentos solapados (necesitaríamos análisis multifrag)
-            # (Se podría implementar en un análisis de segundo nivel)
-        
-        # TTL muy bajo (posible escaneo o comportamiento anómalo)
-        ttl_value = packet.ip_ttl if packet.ip_ttl is not None else packet.ipv6_hop_limit
-        if ttl_value is not None and ttl_value < 5:
-            anomalies.append(
-                Anomaly(
-                    packet_id=packet.id,
-                    type="Low TTL",
-                    description=f"TTL/Hop Limit muy bajo ({ttl_value}), posible comportamiento anómalo",
-                    severity="baja"
-                )
+                # Campos generales de análisis
+                info_text=info_text,
+                is_error=is_error,
+                is_malformed=is_malformed,
+                protocol_stack=protocol_stack,
+                frame_time_relative=frame_time_relative
             )
             
-        # Anomalías en la longitud de los paquetes
-        if packet.tcp_header_length is not None and packet.ip_header_length is not None:
-            # Cabeceras gigantes
-            if packet.tcp_header_length > 60:  # TCP máximo normal ~60 bytes
-                anomalies.append(
-                    Anomaly(
-                        packet_id=packet.id,
-                        type="Oversized Header",
-                        description=f"Cabecera TCP anormalmente grande ({packet.tcp_header_length} bytes)",
-                        severity="baja"
-                    )
+            db_session.add(new_packet)
+            
+            # Crear información específica de protocolo si es necesario
+            # TCP Info
+            if transport_protocol == 'TCP':
+                tcp_info = TCPInfo(
+                    packet=new_packet,
+                    src_port=src_port,
+                    dst_port=dst_port,
+                    seq_number=tcp_seq_number,
+                    ack_number=tcp_ack_number,
+                    window_size=tcp_window_size,
+                    header_length=tcp_header_length,
+                    flag_syn=tcp_flag_syn,
+                    flag_ack=tcp_flag_ack,
+                    flag_fin=tcp_flag_fin,
+                    flag_rst=tcp_flag_rst,
+                    flag_psh=tcp_flag_psh,
+                    flag_urg=tcp_flag_urg,
+                    flag_ece=tcp_flag_ece,
+                    flag_cwr=tcp_flag_cwr,
+                    has_timestamp=tcp_ts_value is not None,
+                    timestamp_value=tcp_ts_value,
+                    timestamp_echo=tcp_ts_echo,
+                    mss=tcp_mss,
+                    window_scale=tcp_window_size_scalefactor
                 )
+                db_session.add(tcp_info)
                 
-            if packet.ip_header_length > 60:  # IPv4 máximo normal ~60 bytes
-                anomalies.append(
-                    Anomaly(
-                        packet_id=packet.id,
-                        type="Oversized Header",
-                        description=f"Cabecera IP anormalmente grande ({packet.ip_header_length} bytes)",
-                        severity="baja"
-                    )
+            # UDP Info
+            elif transport_protocol == 'UDP':
+                udp_info = UDPInfo(
+                    packet=new_packet,
+                    src_port=src_port or 0,
+                    dst_port=dst_port or 0,
+                    length=udp_length
                 )
+                db_session.add(udp_info)
                 
-        # Anomalías específicas de protocolo
-        if packet.protocol == "DNS" and packet.dns_query_name is not None:
-            # Detección de nombres DNS sospechosamente largos (posible tunneling/exfiltración)
-            if packet.dns_query_name and len(packet.dns_query_name) > 50:
-                anomalies.append(
-                    Anomaly(
-                        packet_id=packet.id,
-                        type="Suspicious DNS",
-                        description=f"Nombre de consulta DNS anormalmente largo ({len(packet.dns_query_name)} caracteres)",
-                        severity="baja"
-                    )
+            # ICMP Info
+            elif transport_protocol in ['ICMP', 'ICMPv6']:
+                icmp_info = ICMPInfo(
+                    packet=new_packet,
+                    type=icmp_type or 0,
+                    code=icmp_code or 0,
+                    checksum=icmp_checksum,
+                    identifier=icmp_identifier,
+                    sequence=icmp_sequence,
+                    description=f"Type: {icmp_type}, Code: {icmp_code}"
                 )
-                
-            # Consultas DNS para dominios conocidos maliciosos (esto requeriría una base de bloques)
-            suspicious_domains = ["malware.", "phishing.", "blocked."]
-            for domain in suspicious_domains:
-                if packet.dns_query_name and domain in packet.dns_query_name.lower():
-                    anomalies.append(
-                        Anomaly(
-                            packet_id=packet.id,
-                            type="Suspicious Domain",
-                            description=f"Posible consulta a dominio malicioso: {packet.dns_query_name}",
-                            severity="media"
-                        )
-                    )
-        
-        # Añadir marca de malformed/error si se detectó durante el procesamiento
-        if packet.is_malformed or packet.is_error:
-            anomalies.append(
-                Anomaly(
-                    packet_id=packet.id,
-                    type="Malformed Packet",
-                    description=f"Paquete malformado: {packet.info_text}",
-                    severity="media"
-                )
-            )
-        
-        # Añadir todas las anomalías detectadas a la base de datos
-        for anomaly in anomalies:
-            db_session.add(anomaly)
+                db_session.add(icmp_info)
+            
+            return True
+            
+        except Exception as e:
+            print(f"Error al crear objeto de paquete #{packet_number}: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
