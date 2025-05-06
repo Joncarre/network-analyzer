@@ -279,37 +279,24 @@ def init_db(db_path=None, force_new=False):
     if db_path is None:
         db_dir = os.getenv('DATABASE_DIRECTORY', './data/db_files')
         os.makedirs(db_dir, exist_ok=True)
-        
-        # Si force_new es True o si no hay bases de datos existentes, crear una nueva
         if force_new:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             db_path = os.path.join(db_dir, f"database_{timestamp}.db")
-            print(f"[INFO] Using database: {db_path}")
         else:
-            # Buscar la base de datos más reciente
             db_files = glob.glob(os.path.join(db_dir, 'database_*.db'))
             if db_files:
                 db_path = max(db_files, key=os.path.getmtime)
-                print(f"Usando la base de datos existente más reciente: {db_path}")
             else:
-                # Si no hay ninguna, crear una nueva con timestamp
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 db_path = os.path.join(db_dir, f"database_{timestamp}.db")
-                print(f"No se encontraron bases de datos existentes. Creando nueva: {db_path}")
-    
-    # Asegurarse de que el directorio existe (redundante pero seguro)
+
     os.makedirs(os.path.dirname(db_path), exist_ok=True)
-    
-    # Crear el motor y las tablas
     engine = create_engine(f'sqlite:///{db_path}')
     try:
         Base.metadata.create_all(engine)
-        # Solo mostramos este mensaje cuando no estamos forzando una nueva base de datos
-        if not force_new or db_path is not None:
-            print(f"Tablas aseguradas/creadas en: {db_path}")
+        print("El esquema de la base de datos está listo para ser utilizado.")
     except Exception as e:
         print(f"Error al crear/asegurar tablas en {db_path}: {e}")
-        raise # Re-raise exception after logging
-    
-    return engine, db_path # Return path as well for clarity if needed
+        raise
+    return engine, db_path
 

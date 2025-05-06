@@ -61,10 +61,10 @@ packet_count = cursor.fetchone()[0]
 
 # Obtener distribución de protocolos
 cursor.execute("""
-    SELECT protocol, COUNT(*) as count 
+    SELECT transport_protocol, COUNT(*) as count 
     FROM packets 
     WHERE session_id = ? 
-    GROUP BY protocol
+    GROUP BY transport_protocol
 """, (session_id,))
 protocols = cursor.fetchall()
 
@@ -75,17 +75,55 @@ session_data = {
     "anomaly_count": 0  # Podría obtenerse de la base de datos si existe esta información
 }
 
-print("\n--- Modo de chat con IA ---")
-print("(Escribe 'salir' para terminar)")
+# Preferencia de respuesta inicial
+user_preference = "corto"  # Puede ser: corto, normal, detallado
+
+# Historial de preguntas del usuario
+user_questions_history = []
+
+print("\n--------- Modo de chat con IA ---------")
+print("")
+print("Comandos disponibles para preferencias de respuesta. Puedes cambiar la preferencia en cualquier momento (o /salir para finalizar).")
+print("  /corto     - Respuestas breves y concisas")
+print("  /normal    - Respuestas con nivel medio de detalle")
+print("  /detallado - Respuestas completas con mayor explicación")
+print("")
+print("Comandos especiales:")
+print("  /reiniciar        - Reinicia el historial de conversación con la IA")
+print("  /historial        - Muestra las preguntas enviadas en esta sesión")
+print("  /borrar_historial - Borra solo el historial de preguntas del usuario")
 
 # Bucle de chat
 while True:
-    query = input("\nTu pregunta: ")
+    print(f"\nPreferencia de respuesta actual: {user_preference}")
+    query = input("Tu pregunta o comando: ").strip()
     if query.lower() in ['salir', 'exit', 'quit']:
         break
-        
+    # Comandos de preferencia y especiales
+    if query.startswith("/"):
+        cmd = query[1:].lower()
+        if cmd in ["corto", "normal", "detallado"]:
+            user_preference = cmd
+            print(f"Preferencia cambiada a: {user_preference}")
+        elif cmd == "reiniciar":
+            claude_ai.clear_conversation()
+            print("Historial de conversación reiniciado.")
+        elif cmd == "historial":
+            if user_questions_history:
+                print("\nHistorial de preguntas del usuario:")
+                for i, q in enumerate(user_questions_history, 1):
+                    print(f"{i}. {q}")
+            else:
+                print("No hay preguntas en el historial.")
+        elif cmd == "borrar_historial":
+            user_questions_history.clear()
+            print("Historial de preguntas del usuario borrado.")
+        else:
+            print("Comando no reconocido. Usa /corto, /normal, /detallado, /reiniciar, /historial o /borrar_historial.")
+        continue
     try:
-        response = claude_ai.query(query, session_data)
+        user_questions_history.append(query)
+        response = claude_ai.query(query, session_data, user_preference)
         print("\nRespuesta del AI:")
         print(response)
     except Exception as e:

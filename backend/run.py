@@ -14,7 +14,6 @@ db_path = os.path.join(db_dir, db_filename)
 
 # --- Set DATABASE_PATH environment variable ---
 os.environ['DATABASE_PATH'] = db_path
-print(f"[INFO] Using database: {db_path}") # Log the database path being used
 # -----------------------------------------
 
 # Importar y ejecutar la aplicación principal (AFTER setting env var)
