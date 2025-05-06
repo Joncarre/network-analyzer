@@ -25,15 +25,20 @@ def _get_tcp_flags(tcp_info):
     if tcp_info.flag_cwr: flags.append("CWR")
     return ", ".join(flags) if flags else "None"
 
-def get_db_session():
+def get_db_session(db_file: Optional[str] = None):
     """Crea y retorna una sesión de base de datos, asegurando que las tablas existen."""
     db_dir = os.getenv('DATABASE_DIRECTORY', './data/db_files')
-    db_files = glob.glob(os.path.join(db_dir, 'database_*.db'))
-    if not db_files:
-        raise HTTPException(status_code=500, detail="No se encontró ninguna base de datos")
-    latest_db = max(db_files, key=os.path.getmtime)
-    engine = create_engine(f'sqlite:///{latest_db}')
-    # Asegura que las tablas existen antes de operar
+    if db_file:
+        # Seguridad: solo permitir archivos dentro del directorio y con extensión .db
+        db_path = os.path.abspath(os.path.join(db_dir, db_file))
+        if not db_path.startswith(os.path.abspath(db_dir)) or not db_file.endswith('.db') or not os.path.exists(db_path):
+            raise HTTPException(status_code=400, detail="Base de datos no válida")
+    else:
+        db_files = glob.glob(os.path.join(db_dir, 'database_*.db'))
+        if not db_files:
+            raise HTTPException(status_code=500, detail="No se encontró ninguna base de datos")
+        db_path = max(db_files, key=os.path.getmtime)
+    engine = create_engine(f'sqlite:///{db_path}')
     Base.metadata.create_all(engine)
     Session = sessionmaker(bind=engine)
     return Session()
@@ -69,10 +74,8 @@ class PacketResponse(BaseModel):
 
 # Endpoint para obtener todas las sesiones de captura
 @router.get("/sessions", response_model=SessionsResponse)
-async def get_sessions(db=Depends(get_db_session)):
-    """
-    Obtiene todas las sesiones de captura almacenadas en la base de datos
-    """
+async def get_sessions(db_file: Optional[str] = Query(None)):
+    db = get_db_session(db_file)
     try:
         # Obtenemos las sesiones con conteo de anomalías
         sessions_with_anomalies = (
@@ -114,14 +117,13 @@ async def get_sessions(db=Depends(get_db_session)):
         print(f"Error al obtener sesiones: {str(e)}")
         print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Error al obtener sesiones: {str(e)}")
+    finally:
+        db.close()
 
 # Obtener detalles de una sesión específica
 @router.get("/sessions/{session_id}", response_model=dict)
-def get_session_details(session_id: int):
-    """
-    Obtiene los detalles completos de una sesión de captura específica.
-    """
-    db_session = get_db_session()
+def get_session_details(session_id: int, db_file: Optional[str] = Query(None)):
+    db_session = get_db_session(db_file)
     try:
         # Buscar la sesión por ID
         session = db_session.query(CaptureSession).filter(CaptureSession.id == session_id).first()
@@ -153,11 +155,8 @@ def get_session_details(session_id: int):
 
 # Obtener análisis estadísticos de una sesión
 @router.get("/analytics/{session_id}", response_model=dict)
-def get_session_analytics(session_id: int):
-    """
-    Obtiene análisis estadísticos de una sesión específica.
-    """
-    db_session = get_db_session()
+def get_session_analytics(session_id: int, db_file: Optional[str] = Query(None)):
+    db_session = get_db_session(db_file)
     try:
         # Verificar que la sesión existe
         session = db_session.query(CaptureSession).filter(CaptureSession.id == session_id).first()
@@ -220,5 +219,25 @@ def get_session_analytics(session_id: int):
         }
     finally:
         db_session.close()
-        
-# Resto del archivo continúa abajo...
+
+@router.get("/list-db-files", response_model=List[dict])
+def list_db_files():
+    """
+    Lista los archivos de base de datos (.db) disponibles en el directorio de bases de datos.
+    """
+    db_dir = os.getenv('DATABASE_DIRECTORY', './data/db_files')
+    if not os.path.exists(db_dir):
+        return []
+    db_files = []
+    for file in sorted(os.listdir(db_dir), reverse=True):
+        if file.endswith(".db"):
+            file_path = os.path.join(db_dir, file)
+            size = os.path.getsize(file_path) / 1024  # KB
+            mod_time = datetime.fromtimestamp(os.path.getmtime(file_path)).strftime("%Y-%m-%d %H:%M:%S")
+            db_files.append({
+                "name": file,
+                "path": file_path,
+                "size_kb": round(size, 2),
+                "modified": mod_time
+            })
+    return db_files

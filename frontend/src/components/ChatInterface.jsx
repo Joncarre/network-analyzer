@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { postChatMessage, clearChatHistory } from '../services/api';
 
-function ChatInterface({ sessionId }) {
+function ChatInterface({ sessionId, dbFile }) {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -63,11 +63,8 @@ function ChatInterface({ sessionId }) {
     setUserQuestionsHistory((prev) => [...prev, query]);
     setLoading(true);
     try {
-      // Enviar preferencia como prefijo si es necesario
       let messageToSend = query;
-      // El backend ya usa la preferencia si se le pasa, pero si quieres puedes anteponer el modo al mensaje
-      // messageToSend = `[${userPreference}] ${query}`;
-      const response = await postChatMessage(messageToSend, sessionId);
+      const response = await postChatMessage(messageToSend, sessionId, dbFile);
       const assistantMessage = { role: 'assistant', content: response.data.response };
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (err) {

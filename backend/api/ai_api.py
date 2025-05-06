@@ -15,6 +15,7 @@ router = APIRouter(prefix="/api/ai", tags=["ai"])
 class ChatRequest(BaseModel):
     message: str
     session_id: Optional[int] = None
+    db_file: Optional[str] = None
 
 # Modelo para respuesta de chat
 class ChatResponse(BaseModel):
@@ -36,18 +37,24 @@ def get_claude():
             )
     return _claude_instance
 
-def get_db_session():
+def get_db_session(db_file: Optional[str] = None):
     """Crea y retorna una sesión de base de datos"""
     db_dir = os.getenv('DATABASE_DIRECTORY', './data/db_files')
-    db_files = glob.glob(os.path.join(db_dir, 'database_*.db'))
     
-    if not db_files:
-        raise HTTPException(status_code=500, detail="No se encontró ninguna base de datos")
+    if db_file:
+        db_path = os.path.abspath(os.path.join(db_dir, db_file))
+        if not db_path.startswith(os.path.abspath(db_dir)) or not db_file.endswith('.db') or not os.path.exists(db_path):
+            raise HTTPException(status_code=400, detail="Base de datos no válida")
+    else:
+        db_files = glob.glob(os.path.join(db_dir, 'database_*.db'))
         
-    # Ordenar por fecha de modificación (más reciente primero)
-    latest_db = max(db_files, key=os.path.getmtime)
+        if not db_files:
+            raise HTTPException(status_code=500, detail="No se encontró ninguna base de datos")
+            
+        # Ordenar por fecha de modificación (más reciente primero)
+        db_path = max(db_files, key=os.path.getmtime)
     
-    engine = create_engine(f'sqlite:///{latest_db}')
+    engine = create_engine(f'sqlite:///{db_path}')
     # Asegurar que las tablas existan antes de operar
     Base.metadata.create_all(engine)
     Session = sessionmaker(bind=engine)
@@ -69,7 +76,7 @@ async def process_chat(
         
         # Si se proporciona un ID de sesión, obtener datos de contexto
         if chat_request.session_id:
-            db_session = get_db_session()
+            db_session = get_db_session(chat_request.db_file)
             try:
                 # Verificar que existe la sesión
                 capture = db_session.query(CaptureSession).filter(CaptureSession.id == chat_request.session_id).first()

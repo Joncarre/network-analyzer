@@ -49,11 +49,11 @@ export const processPcapFile = (filePath, interfaceId) => {
 
 // --- Nuevas funciones para Análisis ---
 
-// Obtener lista de sesiones
-export const getSessions = () => apiClient.get('/database/sessions');
+// Obtener lista de sesiones de una base de datos específica
+export const getSessions = (dbFile) => apiClient.get('/database/sessions', { params: dbFile ? { db_file: dbFile } : {} });
 
-// Obtener detalles de una sesión
-export const getSessionDetails = (sessionId) => apiClient.get(`/database/sessions/${sessionId}`);
+// Obtener detalles de una sesión de una base de datos específica
+export const getSessionDetails = (sessionId, dbFile) => apiClient.get(`/database/sessions/${sessionId}`, { params: dbFile ? { db_file: dbFile } : {} });
 
 // Obtener paquetes de una sesión (con filtros/paginación)
 export const getSessionPackets = (sessionId, params) => {
@@ -70,9 +70,12 @@ export const getSessionAnomalies = (sessionId, params) => {
 // Obtener análisis estadísticos de una sesión
 export const getSessionAnalytics = (sessionId) => apiClient.get(`/database/analytics/${sessionId}`);
 
-// Enviar mensaje al chat de IA
-export const postChatMessage = (message, sessionId = null) => {
-  return apiClient.post('/ai/chat', { message, session_id: sessionId });
+// Listar bases de datos disponibles
+export const listDbFiles = () => apiClient.get('/database/list-db-files');
+
+// Enviar mensaje al chat de IA con base de datos específica
+export const postChatMessage = (message, sessionId = null, dbFile = null) => {
+  return apiClient.post('/ai/chat', { message, session_id: sessionId, db_file: dbFile });
 };
 
 // Limpiar historial de chat de IA

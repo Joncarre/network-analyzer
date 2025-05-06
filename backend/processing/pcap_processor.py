@@ -9,19 +9,25 @@ from database.models import Base, CaptureSession, Packet, TCPInfo, UDPInfo, ICMP
 class PCAPProcessor:
     """Clase para procesar archivos PCAP y almacenar datos en la base de datos"""
     
-    def __init__(self, db_path=None):
+    def __init__(self, db_path=None, pcap_file=None):
         """
         Inicializa el procesador de PCAP.
         
         Args:
             db_path (str, opcional): Ruta a la base de datos SQLite.
+            pcap_file (str, opcional): Ruta al archivo PCAP.
         """
+        db_dir = os.getenv('DATABASE_DIRECTORY', './data/db_files')
+        os.makedirs(db_dir, exist_ok=True)
         if db_path is None:
-            db_dir = os.getenv('DATABASE_DIRECTORY', './data/db_files')
-            os.makedirs(db_dir, exist_ok=True)
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            db_path = os.path.join(db_dir, f"database_{timestamp}.db")
-            
+            if pcap_file is not None:
+                # Usar el nombre base del pcap para el .db
+                base = os.path.splitext(os.path.basename(pcap_file))[0]
+                db_path = os.path.join(db_dir, f"{base}.db")
+            else:
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                db_path = os.path.join(db_dir, f"database_{timestamp}.db")
+                
         # Asegurar que el directorio de la base de datos existe
         os.makedirs(os.path.dirname(db_path), exist_ok=True)
         

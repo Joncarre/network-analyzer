@@ -33,7 +33,7 @@ def process_pcap_in_separate_process(pcap_file, interface=None, filter_applied=N
         str: Ruta a la base de datos generada
     """
     try:
-        processor = PCAPProcessor()
+        processor = PCAPProcessor(pcap_file=pcap_file)
         db_path = processor.db_path
         processor.process_pcap_file(pcap_file, interface, filter_applied)
         return db_path
