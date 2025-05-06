@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { getSessions, getSessionDetails } from '../services/api';
-import PacketTable from '../components/PacketTable';
-import AnomalyTable from '../components/AnomalyTable';
-import SessionAnalytics from '../components/SessionAnalytics';
 import ChatInterface from '../components/ChatInterface'; // Importar ChatInterface
 
 function AnalysisPage() {
@@ -21,7 +18,7 @@ function AnalysisPage() {
       try {
         setLoadingSessions(true);
         const response = await getSessions();
-        setSessions(response.data);
+        setSessions(Array.isArray(response.data.sessions) ? response.data.sessions : []);
         setErrorSessions(null);
       } catch (err) {
         console.error("Error fetching sessions:", err);
@@ -91,45 +88,16 @@ function AnalysisPage() {
         )}
       </div>
 
-      {/* Columna de Detalles, Paquetes, Anomalías, Análisis y Chat */}
+      {/* Columna de Chat */}
       <div className="md:col-span-2">
         {selectedSessionId ? (
           <div className="bg-white shadow-md rounded-lg p-4 mt-10 md:mt-0">
-            <h2 className="text-xl font-semibold mb-3">Detalles de la Sesión {selectedSessionId}</h2>
-            {loadingDetails && <p>Cargando detalles...</p>}
-            {errorDetails && <p className="text-red-500">{errorDetails}</p>}
-            {selectedSessionDetails && (
-              <div>
-                <p><strong>Archivo:</strong> {selectedSessionDetails.file_name}</p>
-                <p><strong>Fecha:</strong> {new Date(selectedSessionDetails.capture_date).toLocaleString()}</p>
-                <p><strong>Paquetes:</strong> {selectedSessionDetails.packet_count}</p>
-                <p><strong>Anomalías:</strong> {selectedSessionDetails.anomaly_count}</p>
-                <div className="mt-2">
-                  <strong>Protocolos:</strong>
-                  <ul className="list-disc list-inside ml-4">
-                    {Object.entries(selectedSessionDetails.protocols || {}).map(([proto, count]) => (
-                      <li key={proto}>{proto}: {count}</li>
-                    ))}
-                  </ul>
-                </div>
-                
-                {/* Integrar el análisis estadístico */}
-                <SessionAnalytics sessionId={selectedSessionId} />
-
-                {/* Integrar la tabla de paquetes */}
-                <PacketTable sessionId={selectedSessionId} />
-
-                {/* Integrar la tabla de anomalías */}
-                <AnomalyTable sessionId={selectedSessionId} />
-
-                {/* Integrar la interfaz de chat */}
-                <ChatInterface sessionId={selectedSessionId} />
-              </div>
-            )}
+            {/* Solo mostrar el chat, eliminar detalles, análisis, tablas */}
+            <ChatInterface sessionId={selectedSessionId} />
           </div>
         ) : (
           <div className="flex items-center justify-center h-full text-gray-500">
-            <p>Selecciona una sesión para ver sus detalles.</p>
+            <p>Selecciona una sesión para ver el chat con IA.</p>
           </div>
         )}
       </div>
