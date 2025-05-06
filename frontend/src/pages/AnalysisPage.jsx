@@ -126,7 +126,7 @@ function AnalysisPage() {
       <div className="md:col-span-2">
         {selectedDbFile ? (
           <div className="bg-white shadow-md rounded-lg p-4 mt-10 md:mt-0">
-            <ChatInterface dbFile={selectedDbFile} />
+            <ChatInterface dbFile={selectedDbFile} sessionId={selectedSessionId} />
           </div>
         ) : (
           <div className="flex items-center justify-center h-full text-gray-500">

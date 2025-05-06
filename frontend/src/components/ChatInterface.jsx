@@ -64,7 +64,7 @@ function ChatInterface({ sessionId, dbFile }) {
     setLoading(true);
     try {
       let messageToSend = query;
-      const response = await postChatMessage(messageToSend, sessionId, dbFile);
+      const response = await postChatMessage(messageToSend, sessionId, dbFile, userPreference);
       const assistantMessage = { role: 'assistant', content: response.data.response };
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (err) {

@@ -73,9 +73,9 @@ export const getSessionAnalytics = (sessionId) => apiClient.get(`/database/analy
 // Listar bases de datos disponibles
 export const listDbFiles = () => apiClient.get('/database/list-db-files');
 
-// Enviar mensaje al chat de IA con base de datos específica
-export const postChatMessage = (message, sessionId = null, dbFile = null) => {
-  return apiClient.post('/ai/chat', { message, session_id: sessionId, db_file: dbFile });
+// Enviar mensaje al chat de IA con base de datos y preferencia de usuario
+export const postChatMessage = (message, sessionId = null, dbFile = null, userPreference = null) => {
+  return apiClient.post('/ai/chat', { message, session_id: sessionId, db_file: dbFile, user_preference: userPreference });
 };
 
 // Limpiar historial de chat de IA

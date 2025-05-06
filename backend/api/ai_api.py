@@ -16,6 +16,7 @@ class ChatRequest(BaseModel):
     message: str
     session_id: Optional[int] = None
     db_file: Optional[str] = None
+    user_preference: Optional[str] = None
 
 # Modelo para respuesta de chat
 class ChatResponse(BaseModel):
@@ -73,32 +74,22 @@ async def process_chat(
     """
     try:
         session_data = None
-        
-        # Si se proporciona un ID de sesión, obtener datos de contexto
-        if chat_request.session_id:
-            db_session = get_db_session(chat_request.db_file)
-            try:
+        db_session = None
+        try:
+            if chat_request.session_id:
+                db_session = get_db_session(chat_request.db_file)
                 # Verificar que existe la sesión
                 capture = db_session.query(CaptureSession).filter(CaptureSession.id == chat_request.session_id).first()
-                
                 if not capture:
                     raise HTTPException(status_code=404, detail=f"Sesión con ID {chat_request.session_id} no encontrada")
-                
-                # Obtener datos básicos para contexto
                 packet_count = capture.packet_count
-                
-                # Contar paquetes por protocolo
-                protocol_rows = db_session.query(Packet.protocol, func.count(Packet.id)).filter(
+                protocol_rows = db_session.query(Packet.transport_protocol, func.count(Packet.id)).filter(
                     Packet.session_id == chat_request.session_id
-                ).group_by(Packet.protocol).all()
-                
+                ).group_by(Packet.transport_protocol).all()
                 protocol_counts = {protocol: count for protocol, count in protocol_rows}
-                
-                # Contar anomalías
                 anomaly_count = db_session.query(func.count(Anomaly.id)).join(
                     Packet, Packet.id == Anomaly.packet_id
                 ).filter(Packet.session_id == chat_request.session_id).scalar()
-                
                 session_data = {
                     "session_id": chat_request.session_id,
                     "file_name": capture.file_name,
@@ -106,18 +97,31 @@ async def process_chat(
                     "protocols": protocol_counts,
                     "anomaly_count": anomaly_count
                 }
-                
-            finally:
+            elif chat_request.db_file:
+                db_session = get_db_session(chat_request.db_file)
+                # Estadísticas globales si no hay session_id
+                total_packets = db_session.query(func.count(Packet.id)).scalar()
+                udp_packets = db_session.query(func.count(Packet.id)).filter(Packet.transport_protocol == 'UDP').scalar()
+                tcp_packets = db_session.query(func.count(Packet.id)).filter(Packet.transport_protocol == 'TCP').scalar()
+                icmp_packets = db_session.query(func.count(Packet.id)).filter(Packet.transport_protocol.like('ICMP%')).scalar()
+                session_data = {
+                    "file_name": chat_request.db_file,
+                    "total_packets": total_packets,
+                    "udp_packets": udp_packets,
+                    "tcp_packets": tcp_packets,
+                    "icmp_packets": icmp_packets
+                }
+        finally:
+            if db_session:
                 db_session.close()
-        
-        # Procesar la consulta con Claude
-        response = claude.query(chat_request.message, session_data)
-        
+        response = claude.query(chat_request.message, session_data, chat_request.user_preference)
         return ChatResponse(response=response)
-        
     except HTTPException:
         raise
     except Exception as e:
+        import traceback
+        print("Error en /api/ai/chat:", str(e))
+        print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Error al procesar la consulta: {str(e)}")
 
 @router.post("/clear-chat")
