@@ -46,38 +46,31 @@ function CapturePage() {
   }, []);
 
   // Iniciar captura
-  const handleStartCapture = async () => {
-    try {
-      setLoading(true);
-      setIsCapturing(true);
-      setCaptureStatus('Iniciando captura...');
-      
-      const response = await startCapture(
-        selectedInterface,
-        duration,
-        packetCount
-      );
-      
-      setCaptureStatus(`Captura iniciada correctamente. ID de sesión: ${response.data.session_id || 'N/A'}`);
-      // Actualizar lista de archivos PCAP después de un tiempo
-      setTimeout(async () => {
-        try {
-          const filesResponse = await listPcapFiles();
-          setPcapFiles(filesResponse.data);
-          setCaptureStatus('Captura completada. Lista de archivos actualizada.');
-        } catch (err) {
-          console.error('Error al actualizar archivos:', err);
-        }
-        setIsCapturing(false);
-      }, duration * 1000 + 2000); // Esperar un poco más que la duración para asegurar que termine
-      
-    } catch (error) {
+  const handleStartCapture = () => {
+    setLoading(true);
+    setIsCapturing(true);
+    setCaptureStatus('🛜 Iniciando captura...');
+
+    // Lanzar la petición pero no esperar a que termine para reactivar el botón
+    startCapture(selectedInterface, duration, packetCount).catch((error) => {
       console.error('Error al iniciar captura:', error);
       setCaptureStatus(`Error al iniciar captura: ${error.response?.data?.detail || error.message}`);
       setIsCapturing(false);
-    } finally {
       setLoading(false);
-    }
+    });
+
+    setCaptureStatus('⚙️ Capturando tráfico de red... ');
+    setTimeout(async () => {
+      try {
+        const filesResponse = await listPcapFiles();
+        setPcapFiles(filesResponse.data);
+        setCaptureStatus('✅ Captura completada.');
+      } catch (err) {
+        console.error('Error al actualizar archivos:', err);
+      }
+      setIsCapturing(false);
+      setLoading(false);
+    }, (duration + 5) * 1000);
   };
 
   // Manejar cambio de archivo seleccionado
