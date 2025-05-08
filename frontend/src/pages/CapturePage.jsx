@@ -121,110 +121,98 @@ function CapturePage() {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6">Captura de Tráfico de Red</h1>
-      
+    <div className="container mx-auto p-4 min-h-screen rounded-2xl" style={{ background: '#222831' }}>
+      <h1 className="text-2xl font-bold mb-6 text-[#e9d7a5]">Captura de Tráfico de Red</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Sección de Captura en Vivo */}
-        <div className="bg-white p-4 rounded-lg shadow-md">
-          {/* <h2 className="text-xl font-semibold mb-4">Captura en Vivo</h2> */}
-          
+        {/* Panel de Captura de Tráfico */}
+        <div className="p-4 rounded-2xl shadow-md" style={{ background: '#393E46' }}>
+          <h2 className="text-xl font-semibold mb-4 text-[#DFD0B8]">Captura en Vivo</h2>
           <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">Interfaz de Red</label>
+            <label className="block text-sm font-medium mb-1 text-[#DFD0B8]">Interfaz de Red</label>
             <select 
-              className="w-full border rounded p-2"
+              className="w-full border rounded p-2 bg-[#222831] text-[#DFD0B8] focus:ring-2 focus:ring-[#e9d7a5]"
               value={selectedInterface}
               onChange={(e) => setSelectedInterface(e.target.value)}
               disabled={isCapturing || loading}
             >
               {interfaces.map(iface => (
-                <option key={iface.id} value={iface.id}>
+                <option key={iface.id} value={iface.id} className="bg-[#393E46] text-[#DFD0B8]">
                   {iface.name || iface.id}
                 </option>
               ))}
             </select>
           </div>
-          
           <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">Duración (segundos)</label>
+            <label className="block text-sm font-medium mb-1 text-[#DFD0B8]">Duración (segundos)</label>
             <input 
-              type="text" // Cambiado de number a text
-              className="w-full border rounded p-2"
+              type="text"
+              className="w-full border rounded p-2 bg-[#222831] text-[#DFD0B8] focus:ring-2 focus:ring-[#e9d7a5]"
               value={duration}
-              onChange={(e) => setDuration(Number(e.target.value) || 0)} // Asegurar que sea un número o 0
+              onChange={(e) => setDuration(Number(e.target.value) || 0)}
               disabled={isCapturing || loading}
               min="1"
             />
           </div>
-          
           <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">Límite de Paquetes</label>
+            <label className="block text-sm font-medium mb-1 text-[#DFD0B8]">Límite de Paquetes</label>
             <input 
-              type="text" // Cambiado de number a text
-              className="w-full border rounded p-2"
+              type="text"
+              className="w-full border rounded p-2 bg-[#222831] text-[#DFD0B8] focus:ring-2 focus:ring-[#e9d7a5]"
               value={packetCount}
-              onChange={(e) => setPacketCount(Number(e.target.value) || 0)} // Asegurar que sea un número o 0
+              onChange={(e) => setPacketCount(Number(e.target.value) || 0)}
               disabled={isCapturing || loading}
               min="1"
             />
           </div>
-          
           <button 
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50"
+            className="px-4 py-2 rounded bg-[#948979] text-[#222831] font-semibold shadow hover:bg-[#e9d7a5] transition-colors duration-200 disabled:opacity-50"
             onClick={handleStartCapture}
             disabled={isCapturing || loading || !selectedInterface}
           >
             {isCapturing ? 'Capturando...' : 'Iniciar Captura'}
           </button>
-          
           {captureStatus && (
-            <div className="mt-3 p-2 border rounded bg-gray-50">
+            <div className="mt-3 p-2 border rounded bg-[#DFD0B8] text-[#222831]">
               <p>{captureStatus}</p>
             </div>
           )}
         </div>
-        
-        {/* Sección de Subida de Archivos PCAP */}
-        <div className="bg-white p-4 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-4">Generar base de datos desde fichero .pcap</h2>
-          
+        {/* Panel de Generar base de datos desde fichero .pcap */}
+        <div className="p-4 rounded-2xl shadow-md" style={{ background: '#393E46' }}>
+          <h2 className="text-xl font-semibold mb-4 text-[#DFD0B8]">Generar base de datos desde fichero .pcap</h2>
           <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">Archivo PCAP</label>
+            <label className="block text-sm font-medium mb-1 text-[#DFD0B8]">Archivo PCAP</label>
             <input 
-              ref={fileInputRef} // Asignar la referencia al input
+              ref={fileInputRef}
               type="file" 
-              className="w-full border rounded p-2"
+              className="w-full border rounded p-2 bg-[#222831] text-[#DFD0B8] focus:ring-2 focus:ring-[#e9d7a5]"
               accept=".pcap,.pcapng"
               onChange={handleFileChange}
               disabled={fileLoading}
             />
           </div>
-          
           <button 
-            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 disabled:opacity-50"
+            className="px-4 py-2 rounded bg-[#948979] text-[#222831] font-semibold shadow hover:bg-[#e9d7a5] transition-colors duration-200 disabled:opacity-50"
             onClick={handleFileUpload}
-            disabled={fileLoading || !selectedFile} // Modificado: deshabilitado si carga o no hay archivo
+            disabled={fileLoading || !selectedFile}
           >
             {fileLoading ? 'Subiendo...' : 'Subir Archivo'}
           </button>
-          
           {uploadStatus && (
-            <div className="mt-3 p-2 border rounded bg-gray-50">
+            <div className="mt-3 p-2 border rounded bg-[#DFD0B8] text-[#222831]">
               <p>{uploadStatus}</p>
             </div>
           )}
-          
-          {/* Lista de archivos PCAP existentes - sin botón Procesar */}
           <div className="mt-6">
-            <h3 className="text-lg font-medium mb-2">Archivos .pcap almacenados</h3>
+            <h3 className="text-lg font-medium mb-2 text-[#DFD0B8]">Archivos .pcap almacenados</h3>
             {pcapFiles.length === 0 ? (
-              <p className="text-gray-500">No hay archivos PCAP disponibles.</p>
+              <p className="text-[#DFD0B8]/70">No hay archivos PCAP disponibles.</p>
             ) : (
               <ul className="divide-y border rounded">
                 {pcapFiles.map(file => (
-                  <li key={file.path} className="p-2 hover:bg-gray-50">
+                  <li key={file.path} className="p-2 hover:bg-[#222831] hover:text-[#e9d7a5] transition-colors rounded cursor-pointer">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm">{file.name}</span>
+                      <span className="text-sm text-white">{file.name}</span>
                     </div>
                   </li>
                 ))}

@@ -8,6 +8,7 @@ function ChatInterface({ sessionId, dbFile }) {
   const [error, setError] = useState(null);
   const [userPreference, setUserPreference] = useState('corto'); // corto, normal, detallado
   const [userQuestionsHistory, setUserQuestionsHistory] = useState([]);
+  const [systemMessage, setSystemMessage] = useState(null);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -21,27 +22,28 @@ function ChatInterface({ sessionId, dbFile }) {
       setMessages([]);
       setUserQuestionsHistory([]);
       setError(null);
+      setSystemMessage({ type: 'info', content: 'Chat reiniciado.' });
       return;
     }
     if (cmd === 'historial') {
       if (userQuestionsHistory.length === 0) {
-        setMessages((prev) => [...prev, { role: 'system', content: 'No hay preguntas en el historial.' }]);
+        setSystemMessage({ type: 'info', content: 'No hay preguntas en el historial.' });
       } else {
-        setMessages((prev) => [...prev, { role: 'system', content: 'Historial de preguntas:\n' + userQuestionsHistory.map((q, i) => `${i + 1}. ${q}`).join('\n') }]);
+        setSystemMessage({ type: 'historial', content: 'Historial de preguntas:\n' + userQuestionsHistory.map((q, i) => `${i + 1}. ${q}`).join('\n') });
       }
       return;
     }
     if (cmd === 'borrar_historial') {
       setUserQuestionsHistory([]);
-      setMessages((prev) => [...prev, { role: 'system', content: 'Historial de preguntas del usuario borrado.' }]);
+      setSystemMessage({ type: 'info', content: 'Historial de preguntas del usuario borrado.' });
       return;
     }
     if (["corto", "normal", "detallado"].includes(cmd)) {
       setUserPreference(cmd);
-      setMessages((prev) => [...prev, { role: 'system', content: `Preferencia cambiada a: ${cmd}` }]);
+      setSystemMessage({ type: 'info', content: `Preferencia cambiada a: ${cmd}` });
       return;
     }
-    setMessages((prev) => [...prev, { role: 'system', content: 'Comando no reconocido. Usa /corto, /normal, /detallado, /reiniciar, /historial o /borrar_historial.' }]);
+    setSystemMessage({ type: 'info', content: 'Comando no reconocido. Usa /corto, /normal, /detallado, /reiniciar, /historial o /borrar_historial.' });
   };
 
   const handleSendMessage = async (e) => {
@@ -85,25 +87,41 @@ function ChatInterface({ sessionId, dbFile }) {
   };
 
   return (
-    <div className="mt-6 border-t pt-4">
-      <h3 className="text-lg font-semibold mb-3">Chat con IA</h3>
+    <div className="mt-6 border-t pt-4 rounded-2xl shadow-md" style={{ background: '#393E46' }}>
+      <h3 className="text-lg font-semibold mb-3 text-[#DFD0B8]">Chat con IA</h3>
+      {systemMessage && (
+        <div className={`flex justify-center mb-4`}>
+          {systemMessage.type === 'info' && systemMessage.content.startsWith('Preferencia cambiada a:') ? (
+            <div className="max-w-xl text-center px-4 py-2 rounded-xl font-medium text-[#e9d7a5] bg-transparent">
+              {systemMessage.content}
+            </div>
+          ) : (
+            <div
+              className={`max-w-xl text-center px-4 py-2 rounded-xl font-medium whitespace-pre-line
+                ${systemMessage.type === 'historial' ? 'bg-[#e9d7a5] text-[#222831]' : 'bg-[#948979] text-[#222831]'}`}
+            >
+              {systemMessage.content}
+            </div>
+          )}
+        </div>
+      )}
       <div className="mb-2 flex flex-wrap gap-2">
-        <span className="text-sm">Preferencia actual:</span>
-        <span className="font-bold text-blue-700">{userPreference}</span>
-        <button type="button" className={`px-2 py-1 rounded text-xs ${userPreference==='corto' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`} onClick={() => handleCommand('corto')}>/corto</button>
-        <button type="button" className={`px-2 py-1 rounded text-xs ${userPreference==='normal' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`} onClick={() => handleCommand('normal')}>/normal</button>
-        <button type="button" className={`px-2 py-1 rounded text-xs ${userPreference==='detallado' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`} onClick={() => handleCommand('detallado')}>/detallado</button>
-        <button type="button" className="px-2 py-1 rounded text-xs bg-yellow-100" onClick={() => handleCommand('reiniciar')}>/reiniciar</button>
-        <button type="button" className="px-2 py-1 rounded text-xs bg-gray-100" onClick={() => handleCommand('historial')}>/historial</button>
-        <button type="button" className="px-2 py-1 rounded text-xs bg-red-100" onClick={() => handleCommand('borrar_historial')}>/borrar_historial</button>
+        <span className="text-sm text-[#DFD0B8]">Preferencia actual:</span>
+        <span className="font-bold text-[#948979]">{userPreference}</span>
+        <button type="button" className={`px-2 py-1 rounded text-xs ${userPreference==='corto' ? 'bg-[#948979] text-[#222831]' : 'bg-[#DFD0B8] text-[#222831]'}`} onClick={() => handleCommand('corto')}>/corto</button>
+        <button type="button" className={`px-2 py-1 rounded text-xs ${userPreference==='normal' ? 'bg-[#948979] text-[#222831]' : 'bg-[#DFD0B8] text-[#222831]'}`} onClick={() => handleCommand('normal')}>/normal</button>
+        <button type="button" className={`px-2 py-1 rounded text-xs ${userPreference==='detallado' ? 'bg-[#948979] text-[#222831]' : 'bg-[#DFD0B8] text-[#222831]'}`} onClick={() => handleCommand('detallado')}>/detallado</button>
+        <button type="button" className="px-2 py-1 rounded text-xs bg-[#e9d7a5] text-[#222831]" onClick={() => handleCommand('reiniciar')}>/reiniciar</button>
+        <button type="button" className="px-2 py-1 rounded text-xs bg-[#393E46] text-[#DFD0B8]" onClick={() => handleCommand('historial')}>/historial</button>
+        <button type="button" className="px-2 py-1 rounded text-xs bg-red-400 text-white" onClick={() => handleCommand('borrar_historial')}>/borrar_historial</button>
       </div>
-      {error && <p className="text-red-500 mb-2">{error}</p>}
-      <div className="h-64 overflow-y-auto border rounded p-2 mb-3 bg-gray-50">
-        {messages.length === 0 && <p className="text-gray-500 text-center mt-4">Inicia la conversación...</p>}
+      {error && <p className="text-red-400 mb-2">{error}</p>}
+      <div className="h-64 overflow-y-auto border rounded p-2 mb-3 bg-[#222831]">
+        {messages.length === 0 && <p className="text-[#DFD0B8]/70 text-center mt-4">Inicia la conversación...</p>}
         {messages.map((msg, index) => (
           <div key={index} className={`mb-2 ${msg.role === 'user' ? 'text-right' : msg.role === 'assistant' ? 'text-left' : 'text-center'}`}>
             <span 
-              className={`inline-block p-2 rounded-lg ${msg.role === 'user' ? 'bg-blue-500 text-white' : msg.role === 'assistant' ? 'bg-gray-200 text-gray-800' : 'bg-yellow-100 text-gray-800'}`}
+              className={`inline-block p-2 rounded-lg ${msg.role === 'user' ? 'bg-[#948979] text-[#222831]' : msg.role === 'assistant' ? 'bg-[#DFD0B8] text-[#222831]' : 'bg-[#e9d7a5] text-[#222831]'}`}
             >
               {msg.content}
             </span>
@@ -111,29 +129,32 @@ function ChatInterface({ sessionId, dbFile }) {
         ))}
         <div ref={messagesEndRef} />
       </div>
-      <form onSubmit={handleSendMessage} className="flex items-center">
+      <form onSubmit={handleSendMessage} className="flex items-center gap-0">
         <input
           type="text"
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
           placeholder={sessionId ? `Pregunta sobre la sesión ${sessionId}...` : "Pregunta algo..."}
-          className="flex-grow border rounded-l p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-grow border rounded-l p-2 bg-[#222831] text-[#DFD0B8] focus:outline-none focus:ring-2 focus:ring-[#e9d7a5] h-12"
           disabled={loading}
         />
         <button 
           type="submit"
-          className="bg-blue-500 text-white px-4 py-2 rounded-r hover:bg-blue-600 disabled:opacity-50"
+          className="bg-[#948979] text-[#222831] px-8 py-3 rounded-r hover:bg-[#e9d7a5] disabled:opacity-50 font-semibold h-12"
+          style={{ minWidth: '110px' }}
           disabled={loading || !inputMessage.trim()}
         >
           {loading ? 'Enviando...' : 'Enviar'}
         </button>
       </form>
-      <button 
-        onClick={handleClearChat}
-        className="mt-2 text-sm text-gray-500 hover:text-red-600"
-      >
-        Limpiar Chat
-      </button>
+      <div className="flex justify-center mt-4">
+        <button 
+          onClick={handleClearChat}
+          className="px-6 py-2 rounded-xl bg-[#e9d7a5] text-[#222831] font-semibold shadow hover:bg-[#948979] transition-colors"
+        >
+          Limpiar Chat
+        </button>
+      </div>
     </div>
   );
 }
