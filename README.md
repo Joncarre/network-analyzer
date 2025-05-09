@@ -1,4 +1,4 @@
-# Network Analyzer 🔍🌐
+# Network Analyzer 🌐
 
 Network Analyzer es una herramienta completa para captura, análisis y visualización de tráfico de red con capacidades avanzadas de procesamiento e interpretación mediante IA. El proyecto combina potentes tecnologías de backend para la captura de paquetes con una interfaz web moderna y accesible.
 
