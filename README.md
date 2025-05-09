@@ -1,49 +1,52 @@
-# Network Analyzer
+# Network Analyzer 🔍🌐
+
+Network Analyzer es una herramienta completa para captura, análisis y visualización de tráfico de red con capacidades avanzadas de procesamiento e interpretación mediante IA. El proyecto combina potentes tecnologías de backend para la captura de paquetes con una interfaz web moderna y accesible.
 
 ## Descripción
-Network Analyzer es una herramienta de análisis de tráfico de red que permite capturar, procesar y analizar paquetes de red. La aplicación incluye una interfaz web interactiva para visualizar los datos capturados, detectar anomalías y consultar detalles sobre el tráfico de red mediante un asistente de IA integrado.
 
-## Funcionalidades principales
-- Captura de paquetes de red en interfaces seleccionadas
-- Carga y procesamiento de archivos PCAP existentes
-- Análisis estadístico de tráfico de red
-- Detección de anomalías en el tráfico
-- Visualización detallada de paquetes y conexiones
-- Filtrado de paquetes y anomalías por diversos criterios
-- Asistente de IA para responder preguntas sobre los datos capturados
+Esta herramienta permite capturar paquetes de red en tiempo real, procesarlos, almacenarlos estructuradamente y analizarlos mediante consultas en lenguaje natural. Está pensada tanto para profesionales de seguridad como para administradores de red que quieran entender mejor su tráfico y detectar posibles amenazas o comportamientos anómalos.
 
 ## Estructura del proyecto
-El proyecto se divide en dos componentes principales:
 
-### Backend (Python con FastAPI)
-- API RESTful para gestionar las funcionalidades del sistema
-- Captura y procesamiento de paquetes mediante bibliotecas especializadas
-- Almacenamiento de datos en bases de datos SQLite
-- Integración con IA para análisis y consultas sobre los datos
+El proyecto está dividido en dos componentes principales:
+
+### Backend (Python/FastAPI)
+- **Captura**: Interfaces con TShark para la captura de paquetes
+- **Procesamiento**: Conversión de archivos PCAP a estructuras de datos analizables
+- **Base de datos**: Almacenamiento SQLite de sesiones, paquetes y anomalías
+- **API REST**: Endpoints para todas las funcionalidades
+- **Integración IA**: Conexión con Claude AI para análisis en lenguaje natural
 
 ### Frontend (React)
-- Interfaz de usuario moderna y responsive
-- Visualización de datos de capturas y análisis
-- Filtrado interactivo de datos
-- Interfaz de chat para consultas a la IA
+- **Interfaz visual**: Diseño moderno y responsivo usando TailwindCSS
+- **Captura**: Panel para iniciar capturas o subir archivos PCAP
+- **Análisis**: Visualización de paquetes, anomalías y estadísticas
+- **Chat IA**: Interfaz conversacional para consultas sobre el tráfico
 
-## Requisitos previos
-### Para el backend
-- Python 3.10 o superior
-- Bibliotecas Python (ver `backend/requirements.txt`)
-- Privilegios de administrador o root (necesarios para la captura de paquetes)
-- Librerías del sistema: libpcap (Linux/macOS) o Npcap/Winpcap (Windows)
+## Funcionalidades principales ✨
 
-### Para el frontend
-- Node.js 16 o superior
-- NPM 7 o superior
+- Captura de paquetes en tiempo real desde cualquier interfaz de red
+- Procesamiento y análisis de archivos PCAP existentes
+- Almacenamiento estructurado en bases de datos SQLite
+- Detección automática de anomalías en el tráfico
+- Visualización estadística del tráfico capturado (protocolos, IPs, puertos)
+- Interfaz conversacional con IA para consultar y analizar los datos capturados
+- Diferentes modos de respuesta (corto, normal, detallado) para la IA
 
-## Instalación
+## Requisitos técnicos
+
+- Python 3.8 o superior
+- Node.js 14.x o superior
+- TShark (parte de Wireshark)
+- Acceso a una interfaz de red para captura
+
+## Instalación y configuración 🛠️
 
 ### Configuración del backend
+
 1. Clona el repositorio:
 ```
-git clone https://github.com/[usuario]/network-analyzer.git
+git clone https://github.com/tu_usuario/network-analyzer.git
 cd network-analyzer
 ```
 
@@ -64,7 +67,18 @@ cd backend
 pip install -r requirements.txt
 ```
 
+4. Crea un archivo `.env` en la carpeta `backend` con las siguientes variables (modifica según tu configuración):
+```
+ANTHROPIC_API_KEY=tu_clave_api_de_anthropic
+HOST=localhost
+PORT=8000
+DEBUG=true
+DATABASE_DIRECTORY=./data/db_files
+PCAP_DIRECTORY=./data/pcap_files
+```
+
 ### Configuración del frontend
+
 1. Navega al directorio del frontend:
 ```
 cd ../frontend
@@ -75,60 +89,67 @@ cd ../frontend
 npm install
 ```
 
-## Uso
+## Uso 🚀
 
 ### Iniciar el backend
+
 En el directorio `backend`, ejecuta:
 ```
 python run.py
 ```
-El servidor backend estará disponible en `http://localhost:8000`
+
+El servidor se iniciará en `http://localhost:8000` por defecto.
 
 ### Iniciar el frontend
+
 En el directorio `frontend`, ejecuta:
 ```
 npm run dev
 ```
-La aplicación frontend estará disponible en `http://localhost:5173`
 
-## Instrucciones de uso
+El frontend estará disponible en `http://localhost:5173`.
 
-### Página de captura
-1. Selecciona una interfaz de red de la lista desplegable
-2. Establece la duración de la captura y el límite de paquetes
-3. Haz clic en "Iniciar Captura" para comenzar a capturar paquetes
-4. Alternativamente, puedes subir un archivo PCAP existente
+### Flujo de trabajo típico
 
-### Página de análisis
-1. Selecciona una sesión de captura de la lista
-2. Explora las estadísticas generales, paquetes capturados y anomalías detectadas
-3. Utiliza los filtros disponibles para refinar la visualización de datos
-4. Utiliza el chat con IA para realizar consultas sobre los datos
+1. Ve a la sección "Captura" para iniciar una captura de red o subir un archivo PCAP existente
+2. Espera a que se procese la captura
+3. En la sección "Análisis", selecciona la base de datos y sesión de captura deseada
+4. Explora los paquetes capturados, anomalías detectadas y estadísticas generadas
+5. Utiliza la interfaz de chat para hacer preguntas sobre el tráfico capturado
 
-## Dependencias principales
+## Tipos de pruebas posibles
 
-### Backend
-- **FastAPI**: Framework web para APIs
-- **Scapy**: Manipulación de paquetes de red
-- **SQLAlchemy**: ORM para base de datos
-- **Anthropic SDK**: Integración con Claude AI
-- **Pandas**: Análisis de datos
+El sistema permite realizar diversos tipos de pruebas:
 
-### Frontend
-- **React**: Biblioteca para interfaces de usuario
-- **Tailwind CSS**: Framework CSS para estilos
-- **Axios**: Cliente HTTP para peticiones a la API
-- **React Router**: Enrutamiento para aplicación SPA
-- **Lodash**: Utilidades JavaScript
+- **Captura básica**: Permite capturar paquetes durante un tiempo determinado
+- **Análisis de vulnerabilidades**: Identifica patrones y anomalías que podrían indicar problemas de seguridad
+- **Análisis de rendimiento**: Examina volúmenes de tráfico, distribución de protocolos y tiempos de respuesta
+- **Detección de comportamientos anómalos**: Identifica tráfico inusual o sospechoso en la red
+- **Investigación específica**: Permite filtrar y consultar paquetes según criterios específicos mediante consultas a la IA
 
-## Seguridad
-- La captura de paquetes requiere privilegios elevados
-- Los datos sensibles no deben ser subidos a repositorios públicos
-- Utiliza el archivo `.gitignore` para evitar compartir datos confidenciales
-- Considera cifrar los archivos PCAP si contienen información sensible
+## Ejemplos de consultas para la IA
+
+- "¿Cuáles son los protocolos más utilizados en esta captura?"
+- "¿Hay indicios de escaneos de puertos en esta sesión?"
+- "¿Qué IPs han generado más tráfico?"
+- "¿Puedes identificar alguna actividad sospechosa en esta captura?"
+- "¿Cuáles son las comunicaciones más frecuentes entre hosts?"
+
+## Resolución de problemas
+
+- Si tienes problemas con la captura, asegúrate de que TShark esté instalado correctamente
+- La mayoría de los errores de instalación se resuelven asegurando compatibilidad de versiones de dependencias
+- Para problemas de permisos en Linux/macOS, puede ser necesario ejecutar la aplicación con permisos elevados para acceder a las interfaces de red
 
 ## Licencia
-[Especificar la licencia del proyecto]
+
+Este proyecto está licenciado bajo la licencia MIT. Consulta el archivo LICENSE para más detalles.
 
 ## Contacto
-[Información de contacto del mantenedor]
+
+Para cualquier consulta o sugerencia, puedes contactar a:
+jonathan.carrero@alumnos.ui1.es
+
+---
+
+¡Gracias por utilizar Network Analyzer! Esperamos que esta herramienta te ayude a entender mejor tu tráfico de red y detectar posibles amenazas o comportamientos anómalos.
