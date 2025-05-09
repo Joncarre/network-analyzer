@@ -75,11 +75,11 @@ function AnalysisPage() {
 
   return (
     <div className="container mx-auto p-6 min-h-screen" style={{ background: '#222831', borderRadius: '1.5rem' }}>
-      <h1 className="text-2xl font-bold mb-6 text-[#e9d7a5]">Análisis de Sesiones</h1>
+      <h1 className="text-2xl font-bold mb-6 text-[#e9d7a5]">Análisis de sesiones</h1>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Selector de base de datos */}
         <div className="md:col-span-1 p-4 rounded-2xl shadow-md" style={{ background: '#393E46' }}>
-          <label className="block mb-2 font-semibold text-[#DFD0B8]">Selecciona una base de datos:</label>
+          <label className="block mb-2 text-[#DFD0B8]">Selecciona una base de datos:</label>
           <select
             className="w-full border rounded p-2 bg-[#222831] text-[#DFD0B8] focus:ring-2 focus:ring-[#e9d7a5]"
             value={selectedDbFile || ''}
@@ -98,7 +98,7 @@ function AnalysisPage() {
 
           {!loadingSessions && !errorSessions && (
             <div className="mt-6">
-              <h2 className="text-xl font-semibold mb-3 text-[#DFD0B8]">Sesiones Disponibles</h2>
+              <h2 className="text-xl font-semibold mb-3 text-[#DFD0B8]">Sesiones disponibles</h2>
               {sessions.length === 0 ? (
                 <p className="text-[#DFD0B8]/70">No hay sesiones de captura disponibles.</p>
               ) : (
@@ -126,7 +126,7 @@ function AnalysisPage() {
             <ChatInterface dbFile={selectedDbFile} sessionId={selectedSessionId} />
           ) : (
             <div className="flex items-center justify-center h-full text-[#DFD0B8]/70">
-              <p>Selecciona una base de datos para ver el chat con IA.</p>
+              <p>Selecciona una base de datos para ver el chat con IA</p>
             </div>
           )}
         </div>

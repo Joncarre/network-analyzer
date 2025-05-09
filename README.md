@@ -1,4 +1,4 @@
-# Network Analyzer 🔍🌐
+# Network Analyzer 🌐
 
 Network Analyzer es una herramienta completa para captura, análisis y visualización de tráfico de red con capacidades avanzadas de procesamiento e interpretación mediante IA. El proyecto combina potentes tecnologías de backend para la captura de paquetes con una interfaz web moderna y accesible.
 
@@ -143,7 +143,7 @@ El sistema permite realizar diversos tipos de pruebas:
 
 ## Licencia
 
-Este proyecto está licenciado bajo la licencia MIT. Consulta el archivo LICENSE para más detalles.
+Este proyecto está licenciado bajo la licencia MIT.
 
 ## Contacto
 
@@ -151,5 +151,3 @@ Para cualquier consulta o sugerencia, puedes contactar a:
 jonathan.carrero@alumnos.ui1.es
 
 ---
-
-¡Gracias por utilizar Network Analyzer! Esperamos que esta herramienta te ayude a entender mejor tu tráfico de red y detectar posibles amenazas o comportamientos anómalos.

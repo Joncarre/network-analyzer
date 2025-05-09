@@ -122,13 +122,13 @@ function CapturePage() {
 
   return (
     <div className="container mx-auto p-4 min-h-screen rounded-2xl" style={{ background: '#222831' }}>
-      <h1 className="text-2xl font-bold mb-6 text-[#e9d7a5]">Captura de Tráfico de Red</h1>
+      <h1 className="text-2xl font-bold mb-6 text-[#e9d7a5]">Captura de tráfico de red</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Panel de Captura de Tráfico */}
         <div className="p-4 rounded-2xl shadow-md" style={{ background: '#393E46' }}>
-          <h2 className="text-xl font-semibold mb-4 text-[#DFD0B8]">Captura en Vivo</h2>
+          <h2 className="text-xl font-semibold mb-4 text-[#DFD0B8]">Captura en vivo</h2>
           <div className="mb-4">
-            <label className="block text-sm font-medium mb-1 text-[#DFD0B8]">Interfaz de Red</label>
+            <label className="block text-sm font-medium mb-1 text-[#DFD0B8]">Seleccionar interfaz de red</label>
             <select 
               className="w-full border rounded p-2 bg-[#222831] text-[#DFD0B8] focus:ring-2 focus:ring-[#e9d7a5]"
               value={selectedInterface}
@@ -154,7 +154,7 @@ function CapturePage() {
             />
           </div>
           <div className="mb-4">
-            <label className="block text-sm font-medium mb-1 text-[#DFD0B8]">Límite de Paquetes</label>
+            <label className="block text-sm font-medium mb-1 text-[#DFD0B8]">Límite de paquetes</label>
             <input 
               type="text"
               className="w-full border rounded p-2 bg-[#222831] text-[#DFD0B8] focus:ring-2 focus:ring-[#e9d7a5]"
@@ -169,7 +169,7 @@ function CapturePage() {
             onClick={handleStartCapture}
             disabled={isCapturing || loading || !selectedInterface}
           >
-            {isCapturing ? 'Capturando...' : 'Iniciar Captura'}
+            {isCapturing ? 'Capturando...' : 'Iniciar captura'}
           </button>
           {captureStatus && (
             <div className="mt-3 p-2 border rounded bg-[#DFD0B8] text-[#222831]">
@@ -179,9 +179,9 @@ function CapturePage() {
         </div>
         {/* Panel de Generar base de datos desde fichero .pcap */}
         <div className="p-4 rounded-2xl shadow-md" style={{ background: '#393E46' }}>
-          <h2 className="text-xl font-semibold mb-4 text-[#DFD0B8]">Generar base de datos desde fichero .pcap</h2>
+          <h2 className="text-xl font-semibold mb-4 text-[#DFD0B8]">Generar base de datos</h2>
           <div className="mb-4">
-            <label className="block text-sm font-medium mb-1 text-[#DFD0B8]">Archivo PCAP</label>
+            <label className="block text-sm font-medium mb-1 text-[#DFD0B8]">Seleccionar fichero .pcap</label>
             <input 
               ref={fileInputRef}
               type="file" 
@@ -196,7 +196,7 @@ function CapturePage() {
             onClick={handleFileUpload}
             disabled={fileLoading || !selectedFile}
           >
-            {fileLoading ? 'Subiendo...' : 'Subir Archivo'}
+            {fileLoading ? 'Subiendo...' : 'Subir archivo'}
           </button>
           {uploadStatus && (
             <div className="mt-3 p-2 border rounded bg-[#DFD0B8] text-[#222831]">
@@ -204,9 +204,9 @@ function CapturePage() {
             </div>
           )}
           <div className="mt-6">
-            <h3 className="text-lg font-medium mb-2 text-[#DFD0B8]">Archivos .pcap almacenados</h3>
+            <h3 className="text-sm font-medium mb-2 text-[#DFD0B8]">Archivos .pcap almacenados</h3>
             {pcapFiles.length === 0 ? (
-              <p className="text-[#DFD0B8]/70">No hay archivos PCAP disponibles.</p>
+              <p className="text-[#DFD0B8]/70">No hay archivos .pcap disponibles</p>
             ) : (
               <ul className="divide-y border rounded">
                 {pcapFiles.map(file => (
