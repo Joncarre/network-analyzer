@@ -143,7 +143,7 @@ El sistema permite realizar diversos tipos de pruebas:
 
 ## Licencia
 
-Este proyecto está licenciado bajo la licencia MIT. Consulta el archivo LICENSE para más detalles.
+Este proyecto está licenciado bajo la licencia MIT.
 
 ## Contacto
 
@@ -152,4 +152,3 @@ jonathan.carrero@alumnos.ui1.es
 
 ---
 
-¡Gracias por utilizar Network Analyzer! Esperamos que esta herramienta te ayude a entender mejor tu tráfico de red y detectar posibles amenazas o comportamientos anómalos.
