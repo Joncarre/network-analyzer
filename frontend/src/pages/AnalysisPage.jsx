@@ -76,7 +76,7 @@ function AnalysisPage() {
   return (
     <div className="container mx-auto p-6 min-h-screen" style={{ background: '#222831', borderRadius: '1.5rem' }}>
       <h1 className="text-2xl font-bold mb-6 text-[#e9d7a5]">Análisis de sesiones</h1>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6" style={{ minHeight: '1100vh' }}>
         {/* Selector de base de datos */}
         <div className="md:col-span-1 p-4 rounded-2xl shadow-md" style={{ background: '#393E46' }}>
           <label className="block mb-2 text-[#DFD0B8]">Selecciona una base de datos:</label>
