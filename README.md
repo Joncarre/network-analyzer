@@ -151,3 +151,7 @@ Para cualquier consulta o sugerencia, puedes contactar a:
 jonathan.carrero@alumnos.ui1.es
 
 ---
+<<<<<<< HEAD
+=======
+
+>>>>>>> 3dfef019c701bea09a909c19cede314dba2dbdb8
