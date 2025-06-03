@@ -1,0 +1,44 @@
+{
+  "benchmark_type": "api_rest",
+  "base_url": "http://localhost:8000",
+  "timestamp": "2025-06-03T18:34:09.454569",
+  "results": [
+    {
+      "endpoint": "/",
+      "method": "GET",
+      "iterations": 20,
+      "success_count": 20,
+      "success_rate": 1.0,
+      "avg_response_time": 0.0027163147926330565,
+      "min_response_time": 0.0014548301696777344,
+      "max_response_time": 0.018272876739501953,
+      "median_response_time": 0.0018932819366455078,
+      "requests_per_second": 368.14584329920433,
+      "timestamp": "2025-06-03T18:34:05.375520"
+    },
+    {
+      "endpoint": "/api/capture/interfaces",
+      "method": "GET",
+      "iterations": 15,
+      "success_count": 15,
+      "success_rate": 1.0,
+      "avg_response_time": 0.2666742960611979,
+      "min_response_time": 0.22963595390319824,
+      "max_response_time": 0.3594326972961426,
+      "median_response_time": 0.24934983253479004,
+      "requests_per_second": 3.749892714708861,
+      "timestamp": "2025-06-03T18:34:09.377124"
+    },
+    {
+      "endpoint": "/",
+      "test_type": "concurrent",
+      "concurrent_users": 5,
+      "requests_per_user": 10,
+      "total_requests": 50,
+      "total_time": 0.044960975646972656,
+      "avg_response_time": 0.004133963584899902,
+      "throughput_rps": 1112.0755117191643,
+      "timestamp": "2025-06-03T18:34:09.454137"
+    }
+  ]
+}

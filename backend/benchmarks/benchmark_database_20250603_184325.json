@@ -1,0 +1,390 @@
+{
+  "benchmark_type": "database",
+  "timestamp": "2025-06-03T18:43:25.502219",
+  "results": [
+    {
+      "database": "2coma4.db",
+      "database_stats": {
+        "capture_sessions_count": 1,
+        "packets_count": 8367,
+        "tcp_info_count": 7258,
+        "udp_info_count": 890,
+        "icmp_info_count": 131,
+        "anomalies_count": 0,
+        "file_size_mb": 2.59375
+      },
+      "query_results": [
+        {
+          "query_name": "count_sessions",
+          "query": "SELECT COUNT(*) FROM capture_sessions",
+          "iterations": 10,
+          "avg_time_seconds": 3.573894500732422e-05,
+          "min_time_seconds": 1.8358230590820312e-05,
+          "max_time_seconds": 0.0001819133758544922,
+          "avg_rows_returned": 1,
+          "rows_per_second": 27980.680453635756
+        },
+        {
+          "query_name": "select_sessions_100",
+          "query": "SELECT * FROM capture_sessions LIMIT 100",
+          "iterations": 10,
+          "avg_time_seconds": 2.4247169494628907e-05,
+          "min_time_seconds": 2.0503997802734375e-05,
+          "max_time_seconds": 5.078315734863281e-05,
+          "avg_rows_returned": 1,
+          "rows_per_second": 41241.92723697148
+        },
+        {
+          "query_name": "count_packets",
+          "query": "SELECT COUNT(*) FROM packets",
+          "iterations": 10,
+          "avg_time_seconds": 0.001011061668395996,
+          "min_time_seconds": 0.0008945465087890625,
+          "max_time_seconds": 0.0015056133270263672,
+          "avg_rows_returned": 1,
+          "rows_per_second": 989.0593534086354
+        },
+        {
+          "query_name": "select_packets_1000",
+          "query": "SELECT * FROM packets LIMIT 1000",
+          "iterations": 10,
+          "avg_time_seconds": 0.01054708957672119,
+          "min_time_seconds": 0.01016378402709961,
+          "max_time_seconds": 0.011672735214233398,
+          "avg_rows_returned": 1000,
+          "rows_per_second": 94812.8858417142
+        },
+        {
+          "query_name": "group_by_protocol",
+          "query": "SELECT transport_protocol, COUNT(*) FROM packets GROUP BY transport_protocol",
+          "iterations": 10,
+          "avg_time_seconds": 0.0035470962524414063,
+          "min_time_seconds": 0.003264188766479492,
+          "max_time_seconds": 0.0037908554077148438,
+          "avg_rows_returned": 4,
+          "rows_per_second": 1127.6829596171426
+        },
+        {
+          "query_name": "group_by_ips",
+          "query": "SELECT src_ip, dst_ip, COUNT(*) FROM packets GROUP BY src_ip, dst_ip LIMIT 50",
+          "iterations": 10,
+          "avg_time_seconds": 0.004973936080932617,
+          "min_time_seconds": 0.004147768020629883,
+          "max_time_seconds": 0.006610870361328125,
+          "avg_rows_returned": 50,
+          "rows_per_second": 10052.400993183845
+        }
+      ]
+    },
+    {
+      "database": "database_20250506_011126.db",
+      "database_stats": {
+        "capture_sessions_count": 1,
+        "packets_count": 1900,
+        "tcp_info_count": 0,
+        "udp_info_count": 0,
+        "icmp_info_count": 0,
+        "anomalies_count": 0,
+        "file_size_mb": 0.53125
+      },
+      "query_results": [
+        {
+          "query_name": "count_sessions",
+          "query": "SELECT COUNT(*) FROM capture_sessions",
+          "iterations": 10,
+          "avg_time_seconds": 3.840923309326172e-05,
+          "min_time_seconds": 1.9788742065429688e-05,
+          "max_time_seconds": 0.0001838207244873047,
+          "avg_rows_returned": 1,
+          "rows_per_second": 26035.406579764123
+        },
+        {
+          "query_name": "select_sessions_100",
+          "query": "SELECT * FROM capture_sessions LIMIT 100",
+          "iterations": 10,
+          "avg_time_seconds": 2.5224685668945312e-05,
+          "min_time_seconds": 2.1696090698242188e-05,
+          "max_time_seconds": 5.054473876953125e-05,
+          "avg_rows_returned": 1,
+          "rows_per_second": 39643.705103969754
+        },
+        {
+          "query_name": "count_packets",
+          "query": "SELECT COUNT(*) FROM packets",
+          "iterations": 10,
+          "avg_time_seconds": 4.889965057373047e-05,
+          "min_time_seconds": 2.3603439331054688e-05,
+          "max_time_seconds": 0.0002498626708984375,
+          "avg_rows_returned": 1,
+          "rows_per_second": 20450.04388103364
+        },
+        {
+          "query_name": "select_packets_1000",
+          "query": "SELECT * FROM packets LIMIT 1000",
+          "iterations": 10,
+          "avg_time_seconds": 0.010589075088500977,
+          "min_time_seconds": 0.009355783462524414,
+          "max_time_seconds": 0.013664722442626953,
+          "avg_rows_returned": 1000,
+          "rows_per_second": 94436.95427997604
+        },
+        {
+          "query_name": "group_by_protocol",
+          "query": "SELECT transport_protocol, COUNT(*) FROM packets GROUP BY transport_protocol",
+          "iterations": 10,
+          "avg_time_seconds": 0.00038127899169921876,
+          "min_time_seconds": 0.0003075599670410156,
+          "max_time_seconds": 0.0009121894836425781,
+          "avg_rows_returned": 1,
+          "rows_per_second": 2622.751375687844
+        },
+        {
+          "query_name": "group_by_ips",
+          "query": "SELECT src_ip, dst_ip, COUNT(*) FROM packets GROUP BY src_ip, dst_ip LIMIT 50",
+          "iterations": 10,
+          "avg_time_seconds": 0.0003518819808959961,
+          "min_time_seconds": 0.0003261566162109375,
+          "max_time_seconds": 0.00038909912109375,
+          "avg_rows_returned": 1,
+          "rows_per_second": 2841.861914763873
+        }
+      ]
+    },
+    {
+      "database": "database_20250506_012323.db",
+      "database_stats": {
+        "capture_sessions_count": 1,
+        "packets_count": 40000,
+        "tcp_info_count": 39979,
+        "udp_info_count": 16,
+        "icmp_info_count": 0,
+        "anomalies_count": 0,
+        "file_size_mb": 11.8125
+      },
+      "query_results": [
+        {
+          "query_name": "count_sessions",
+          "query": "SELECT COUNT(*) FROM capture_sessions",
+          "iterations": 10,
+          "avg_time_seconds": 4.8947334289550784e-05,
+          "min_time_seconds": 2.002716064453125e-05,
+          "max_time_seconds": 0.00026154518127441406,
+          "avg_rows_returned": 1,
+          "rows_per_second": 20430.1217730151
+        },
+        {
+          "query_name": "select_sessions_100",
+          "query": "SELECT * FROM capture_sessions LIMIT 100",
+          "iterations": 10,
+          "avg_time_seconds": 4.8542022705078124e-05,
+          "min_time_seconds": 3.170967102050781e-05,
+          "max_time_seconds": 9.202957153320312e-05,
+          "avg_rows_returned": 1,
+          "rows_per_second": 20600.707269155206
+        },
+        {
+          "query_name": "count_packets",
+          "query": "SELECT COUNT(*) FROM packets",
+          "iterations": 10,
+          "avg_time_seconds": 0.00599367618560791,
+          "min_time_seconds": 0.005133390426635742,
+          "max_time_seconds": 0.007300138473510742,
+          "avg_rows_returned": 1,
+          "rows_per_second": 166.84251351469612
+        },
+        {
+          "query_name": "select_packets_1000",
+          "query": "SELECT * FROM packets LIMIT 1000",
+          "iterations": 10,
+          "avg_time_seconds": 0.011848664283752442,
+          "min_time_seconds": 0.010745763778686523,
+          "max_time_seconds": 0.01518559455871582,
+          "avg_rows_returned": 1000,
+          "rows_per_second": 84397.6988504313
+        },
+        {
+          "query_name": "group_by_protocol",
+          "query": "SELECT transport_protocol, COUNT(*) FROM packets GROUP BY transport_protocol",
+          "iterations": 10,
+          "avg_time_seconds": 0.016555404663085936,
+          "min_time_seconds": 0.014097452163696289,
+          "max_time_seconds": 0.02181077003479004,
+          "avg_rows_returned": 3,
+          "rows_per_second": 181.2097052927487
+        },
+        {
+          "query_name": "group_by_ips",
+          "query": "SELECT src_ip, dst_ip, COUNT(*) FROM packets GROUP BY src_ip, dst_ip LIMIT 50",
+          "iterations": 10,
+          "avg_time_seconds": 0.024600815773010255,
+          "min_time_seconds": 0.021695375442504883,
+          "max_time_seconds": 0.027440309524536133,
+          "avg_rows_returned": 32,
+          "rows_per_second": 1300.7698726441197
+        }
+      ]
+    },
+    {
+      "database": "database_20250506_121453.db",
+      "database_stats": {
+        "capture_sessions_count": 1,
+        "packets_count": 80000,
+        "tcp_info_count": 79109,
+        "udp_info_count": 781,
+        "icmp_info_count": 27,
+        "anomalies_count": 0,
+        "file_size_mb": 24.71875
+      },
+      "query_results": [
+        {
+          "query_name": "count_sessions",
+          "query": "SELECT COUNT(*) FROM capture_sessions",
+          "iterations": 10,
+          "avg_time_seconds": 5.543231964111328e-05,
+          "min_time_seconds": 1.9550323486328125e-05,
+          "max_time_seconds": 0.0003342628479003906,
+          "avg_rows_returned": 1,
+          "rows_per_second": 18040.017204301075
+        },
+        {
+          "query_name": "select_sessions_100",
+          "query": "SELECT * FROM capture_sessions LIMIT 100",
+          "iterations": 10,
+          "avg_time_seconds": 3.0517578125e-05,
+          "min_time_seconds": 2.1457672119140625e-05,
+          "max_time_seconds": 0.00010061264038085938,
+          "avg_rows_returned": 1,
+          "rows_per_second": 32768.0
+        },
+        {
+          "query_name": "count_packets",
+          "query": "SELECT COUNT(*) FROM packets",
+          "iterations": 10,
+          "avg_time_seconds": 0.011417508125305176,
+          "min_time_seconds": 0.0099945068359375,
+          "max_time_seconds": 0.0157620906829834,
+          "avg_rows_returned": 1,
+          "rows_per_second": 87.5847854912975
+        },
+        {
+          "query_name": "select_packets_1000",
+          "query": "SELECT * FROM packets LIMIT 1000",
+          "iterations": 10,
+          "avg_time_seconds": 0.010773015022277833,
+          "min_time_seconds": 0.01010751724243164,
+          "max_time_seconds": 0.012317180633544922,
+          "avg_rows_returned": 1000,
+          "rows_per_second": 92824.52479014192
+        },
+        {
+          "query_name": "group_by_protocol",
+          "query": "SELECT transport_protocol, COUNT(*) FROM packets GROUP BY transport_protocol",
+          "iterations": 10,
+          "avg_time_seconds": 0.03576371669769287,
+          "min_time_seconds": 0.03177165985107422,
+          "max_time_seconds": 0.0418848991394043,
+          "avg_rows_returned": 4,
+          "rows_per_second": 111.8451986915007
+        },
+        {
+          "query_name": "group_by_ips",
+          "query": "SELECT src_ip, dst_ip, COUNT(*) FROM packets GROUP BY src_ip, dst_ip LIMIT 50",
+          "iterations": 10,
+          "avg_time_seconds": 0.0488018274307251,
+          "min_time_seconds": 0.04385852813720703,
+          "max_time_seconds": 0.054587364196777344,
+          "avg_rows_returned": 50,
+          "rows_per_second": 1024.551797183737
+        }
+      ]
+    },
+    {
+      "database": "database_20250506_214926.db",
+      "database_stats": {
+        "capture_sessions_count": 1,
+        "packets_count": 57121,
+        "tcp_info_count": 9202,
+        "udp_info_count": 47731,
+        "icmp_info_count": 62,
+        "anomalies_count": 0,
+        "file_size_mb": 17.30078125
+      },
+      "query_results": [
+        {
+          "query_name": "count_sessions",
+          "query": "SELECT COUNT(*) FROM capture_sessions",
+          "iterations": 10,
+          "avg_time_seconds": 4.0483474731445315e-05,
+          "min_time_seconds": 1.8835067749023438e-05,
+          "max_time_seconds": 0.00022721290588378906,
+          "avg_rows_returned": 1,
+          "rows_per_second": 24701.436984687865
+        },
+        {
+          "query_name": "select_sessions_100",
+          "query": "SELECT * FROM capture_sessions LIMIT 100",
+          "iterations": 10,
+          "avg_time_seconds": 3.056526184082031e-05,
+          "min_time_seconds": 2.1219253540039062e-05,
+          "max_time_seconds": 8.0108642578125e-05,
+          "avg_rows_returned": 1,
+          "rows_per_second": 32716.87987519501
+        },
+        {
+          "query_name": "count_packets",
+          "query": "SELECT COUNT(*) FROM packets",
+          "iterations": 10,
+          "avg_time_seconds": 0.008757996559143066,
+          "min_time_seconds": 0.007651805877685547,
+          "max_time_seconds": 0.012453556060791016,
+          "avg_rows_returned": 1,
+          "rows_per_second": 114.1813647958142
+        },
+        {
+          "query_name": "select_packets_1000",
+          "query": "SELECT * FROM packets LIMIT 1000",
+          "iterations": 10,
+          "avg_time_seconds": 0.011432051658630371,
+          "min_time_seconds": 0.01012110710144043,
+          "max_time_seconds": 0.014821767807006836,
+          "avg_rows_returned": 1000,
+          "rows_per_second": 87473.36260023566
+        },
+        {
+          "query_name": "group_by_protocol",
+          "query": "SELECT transport_protocol, COUNT(*) FROM packets GROUP BY transport_protocol",
+          "iterations": 10,
+          "avg_time_seconds": 0.02372596263885498,
+          "min_time_seconds": 0.021625995635986328,
+          "max_time_seconds": 0.02679920196533203,
+          "avg_rows_returned": 4,
+          "rows_per_second": 168.59168417678336
+        },
+        {
+          "query_name": "group_by_ips",
+          "query": "SELECT src_ip, dst_ip, COUNT(*) FROM packets GROUP BY src_ip, dst_ip LIMIT 50",
+          "iterations": 10,
+          "avg_time_seconds": 0.03934445381164551,
+          "min_time_seconds": 0.035849571228027344,
+          "max_time_seconds": 0.04720449447631836,
+          "avg_rows_returned": 50,
+          "rows_per_second": 1270.827147311944
+        }
+      ]
+    },
+    {
+      "test_type": "write_performance",
+      "individual_insert": {
+        "iterations": 5,
+        "avg_time_seconds": 0.00912303924560547,
+        "inserts_per_second": 109.61259434258116
+      },
+      "batch_insert": {
+        "batch_size": 1000,
+        "iterations": 3,
+        "avg_time_seconds": 0.008751710255940756,
+        "inserts_per_second": 114263.38061422785
+      }
+    }
+  ]
+}
