@@ -1,0 +1,66 @@
+{
+  "session_info": {
+    "session_start": "2025-06-03T19:50:17.196305",
+    "model": "claude-3-opus-20240229",
+    "pricing": {
+      "input_cost_per_million_tokens": 15.0,
+      "output_cost_per_million_tokens": 75.0
+    }
+  },
+  "queries": [
+    {
+      "timestamp": "2025-06-03T19:50:39.335781",
+      "input_tokens": 559,
+      "output_tokens": 311,
+      "total_tokens": 870,
+      "response_time_ms": 10414.667129516602,
+      "tokens_per_second": 29.861732125704062,
+      "input_cost_usd": 0.008385,
+      "output_cost_usd": 0.023325000000000002,
+      "total_cost_usd": 0.03171,
+      "model": "claude-3-opus-20240229",
+      "user_question_length": 25,
+      "response_length": 1104
+    },
+    {
+      "timestamp": "2025-06-03T19:51:01.021861",
+      "input_tokens": 883,
+      "output_tokens": 392,
+      "total_tokens": 1275,
+      "response_time_ms": 13810.873985290527,
+      "tokens_per_second": 28.38343181014506,
+      "input_cost_usd": 0.013245,
+      "output_cost_usd": 0.0294,
+      "total_cost_usd": 0.042645,
+      "model": "claude-3-opus-20240229",
+      "user_question_length": 27,
+      "response_length": 1394
+    },
+    {
+      "timestamp": "2025-06-03T19:52:06.192300",
+      "input_tokens": 1459,
+      "output_tokens": 748,
+      "total_tokens": 2207,
+      "response_time_ms": 24436.315774917603,
+      "tokens_per_second": 30.610179001196926,
+      "input_cost_usd": 0.021885,
+      "output_cost_usd": 0.0561,
+      "total_cost_usd": 0.077985,
+      "model": "claude-3-opus-20240229",
+      "user_question_length": 25,
+      "response_length": 2601
+    }
+  ],
+  "session_summary": {
+    "session_start": "2025-06-03T19:50:17.196305",
+    "total_queries": 3,
+    "total_input_tokens": 2901,
+    "total_output_tokens": 1451,
+    "total_tokens": 4352,
+    "total_response_time_ms": 48661.85688972473,
+    "total_cost_usd": 0.15234,
+    "avg_tokens_per_query": 1450.6666666666667,
+    "avg_response_time_ms": 16220.618963241577,
+    "avg_cost_per_query_usd": 0.05078
+  }
+}

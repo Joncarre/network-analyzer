@@ -92,12 +92,16 @@ print("Comandos especiales:")
 print("  /reiniciar        - Reinicia el historial de conversación con la IA")
 print("  /historial        - Muestra las preguntas enviadas en esta sesión")
 print("  /borrar_historial - Borra solo el historial de preguntas del usuario")
+print("  /metricas         - Muestra un resumen de las métricas de la sesión")
+print("  /salir            - Termina la sesión y muestra resumen final")
 
 # Bucle de chat
 while True:
     print(f"\nPreferencia de respuesta actual: {user_preference}")
     query = input("Tu pregunta o comando: ").strip()
     if query.lower() in ['salir', 'exit', 'quit']:
+        # Mostrar resumen final antes de salir
+        claude_ai.print_session_summary()
         break
     # Comandos de preferencia y especiales
     if query.startswith("/"):
@@ -118,8 +122,13 @@ while True:
         elif cmd == "borrar_historial":
             user_questions_history.clear()
             print("Historial de preguntas del usuario borrado.")
+        elif cmd == "metricas":
+            claude_ai.print_session_summary()
+        elif cmd == "salir":
+            claude_ai.print_session_summary()
+            break
         else:
-            print("Comando no reconocido. Usa /corto, /normal, /detallado, /reiniciar, /historial o /borrar_historial.")
+            print("Comando no reconocido. Usa /corto, /normal, /detallado, /reiniciar, /historial, /borrar_historial, /metricas o /salir.")
         continue
     try:
         user_questions_history.append(query)

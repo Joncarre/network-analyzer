@@ -1,15 +1,23 @@
 import os
 import requests
 import json
+import time
 from dotenv import load_dotenv
 from typing import Dict, Any, List, Optional
 
 load_dotenv()
 
+# Importar métricas de forma segura (opcional)
+try:
+    from .claude_metrics import ClaudeMetrics
+    METRICS_AVAILABLE = True
+except ImportError:
+    METRICS_AVAILABLE = False
+
 class ClaudeAI:
     """Clase para integrar con la API de Anthropic Claude"""
     
-    def __init__(self):
+    def __init__(self, enable_metrics: bool = True):
         """Inicializa el cliente de Anthropic Claude"""
         self.api_key = os.getenv('ANTHROPIC_API_KEY')
         
@@ -25,6 +33,15 @@ class ClaudeAI:
         self.model = "claude-3-opus-20240229"
         self.max_tokens = 4000
         self.conversation_history = []
+        
+        # Inicializar métricas de forma segura
+        self.metrics = None
+        if enable_metrics and METRICS_AVAILABLE:
+            try:
+                self.metrics = ClaudeMetrics()
+            except Exception as e:
+                print(f"Warning: No se pudieron inicializar las métricas: {e}")
+                self.metrics = None
     
     def generate_system_prompt(self, session_data: Dict[str, Any] = None, user_preference: str = None) -> str:
         """Genera el prompt del sistema que define el comportamiento del asistente, adaptado a la preferencia del usuario."""
@@ -66,6 +83,8 @@ Información sobre la sesión actual de captura:
     
     def query(self, user_question: str, session_data: Optional[Dict[str, Any]] = None, user_preference: str = None) -> str:
         """Envía una consulta a Claude y obtiene respuesta, adaptando el prompt a la preferencia del usuario."""
+        start_time = time.time()
+        
         try:
             system_prompt = self.generate_system_prompt(session_data, user_preference)
             
@@ -93,6 +112,9 @@ Información sobre la sesión actual de captura:
                 json=payload
             )
             
+            # Calcular tiempo de respuesta
+            response_time_ms = (time.time() - start_time) * 1000
+            
             if response.status_code != 200:
                 return f"Error en la llamada a la API de Claude: {response.status_code} - {response.text}"
             
@@ -114,6 +136,29 @@ Información sobre la sesión actual de captura:
             if not answer:
                 return "No se pudo extraer texto de la respuesta"
             
+            # Capturar métricas de la API si están disponibles
+            if self.metrics:
+                try:
+                    usage = result.get("usage", {})
+                    input_tokens = usage.get("input_tokens", 0)
+                    output_tokens = usage.get("output_tokens", 0)
+                    
+                    query_metrics = self.metrics.record_query(
+                        input_tokens=input_tokens,
+                        output_tokens=output_tokens,
+                        response_time_ms=response_time_ms,
+                        model=self.model,
+                        user_question=user_question,
+                        response=answer
+                    )
+                    
+                    # Mostrar métricas si están disponibles
+                    if query_metrics:
+                        self.metrics.print_query_summary(query_metrics)
+                        
+                except Exception as e:
+                    print(f"Warning: Error al capturar métricas: {e}")
+            
             # Actualizar historial
             self.conversation_history.append({"role": "user", "content": user_question})
             self.conversation_history.append({"role": "assistant", "content": answer})
@@ -126,3 +171,16 @@ Información sobre la sesión actual de captura:
     def clear_conversation(self):
         """Limpia el historial de conversación"""
         self.conversation_history = []
+    
+    def get_session_metrics(self):
+        """Obtiene las métricas de la sesión actual"""
+        if self.metrics:
+            return self.metrics.get_session_summary()
+        return None
+    
+    def print_session_summary(self):
+        """Imprime un resumen de las métricas de la sesión"""
+        if self.metrics:
+            self.metrics.print_session_summary()
+        else:
+            print("Métricas no disponibles")
