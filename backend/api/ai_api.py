@@ -67,7 +67,7 @@ async def process_chat(
     claude: ClaudeAI = Depends(get_claude)
 ) -> ChatResponse:
     """
-    Procesa una consulta en lenguaje natural y retorna una respuesta.
+    Procesa una consulta en lenguaje natural y retorna la respuesta.
     
     Si se proporciona un session_id, la consulta se contextualiza con los datos
     de esa sesión de captura.
