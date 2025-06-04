@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba Fuente Soria</title>
+    <link rel="stylesheet" href="/fonts/soria.css">
+    <style>
+        body {
+            font-family: 'Soria', Arial, sans-serif !important;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-soria {
+            font-family: 'Soria' !important;
+            font-size: 24px;
+            margin: 20px 0;
+        }
+        .test-arial {
+            font-family: Arial !important;
+            font-size: 24px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1 class="test-soria">Esto debería mostrar fuente Soria</h1>
+    <h1 class="test-arial">Esto es Arial para comparar</h1>
+    
+    <p class="test-soria">
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
+        Esta es la fuente Soria aplicada.
+    </p>
+    
+    <p class="test-arial">
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
+        Esta es Arial para comparar.
+    </p>
+    
+    <script>
+        // Verificar si la fuente está cargada
+        document.fonts.ready.then(function() {
+            console.log('Fuentes cargadas:');
+            document.fonts.forEach(function(font) {
+                console.log('- ' + font.family);
+            });
+            
+            // Verificar específicamente Soria
+            if (document.fonts.check('16px Soria')) {
+                console.log('✅ Fuente Soria está disponible');
+            } else {
+                console.log('❌ Fuente Soria NO está disponible');
+            }
+        });
+    </script>
+</body>
+</html>
