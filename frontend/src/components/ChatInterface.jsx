@@ -85,76 +85,118 @@ function ChatInterface({ sessionId, dbFile }) {
       setError("Error al limpiar el historial del chat.");
     }
   };
-
   return (
-    <div className="mt-6 pt-4 rounded-2xl" style={{ background: '#393E46' }}>
-      <h3 className="text-lg font-semibold mb-3 text-[#DFD0B8]">Chat con IA</h3>
+    <div className="h-full">
       {systemMessage && (
-        <div className={`flex justify-center mb-4`}>
+        <div className="flex justify-center mb-4">
           {systemMessage.type === 'info' && (systemMessage.content.startsWith('Preferencia cambiada a:') ||
             systemMessage.content === 'Chat reiniciado.' ||
             systemMessage.content === 'No hay preguntas en el historial.' ||
             systemMessage.content === 'Historial de preguntas del usuario borrado.') ? (
-            <div className="max-w-xl text-center px-4 py-2 rounded-xl font-medium text-[#e9d7a5] bg-transparent">
+            <div className="max-w-xl text-center px-4 py-2 rounded-2xl font-medium text-slate-600 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200">
               {systemMessage.content}
             </div>
           ) : (
             <div
-              className={`max-w-xl text-center px-4 py-2 rounded-xl font-medium whitespace-pre-line
-                ${systemMessage.type === 'historial' ? 'bg-[#e9d7a5] text-[#222831]' : 'bg-[#59b0b6] text-[#222831]'}`}
+              className={`max-w-xl text-center px-4 py-2 rounded-2xl font-medium whitespace-pre-line
+                ${systemMessage.type === 'historial' ? 'bg-gradient-to-r from-purple-100 to-pink-100 text-slate-700 border border-purple-200' : 'bg-gradient-to-r from-emerald-100 to-teal-100 text-slate-700 border border-emerald-200'}`}
             >
               {systemMessage.content}
             </div>
           )}
         </div>
       )}
-      <div className="mb-4 flex flex-wrap gap-3">
-        <span className="text-sm text-[#DFD0B8]">Preferencia actual:</span>
-        <button type="button" className={`px-2 py-1 rounded text-xs ${userPreference==='corto' ? 'bg-[#59b0b6] text-[#222831]' : 'bg-[#DFD0B8] text-[#222831]'}`} onClick={() => handleCommand('corto')}>/corto</button>
-        <button type="button" className={`px-2 py-1 rounded text-xs ${userPreference==='normal' ? 'bg-[#59b0b6] text-[#222831]' : 'bg-[#DFD0B8] text-[#222831]'}`} onClick={() => handleCommand('normal')}>/normal</button>
-        <button type="button" className={`px-2 py-1 rounded text-xs ${userPreference==='detallado' ? 'bg-[#59b0b6] text-[#222831]' : 'bg-[#DFD0B8] text-[#222831]'}`} onClick={() => handleCommand('detallado')}>/detallado</button>
-        <button type="button" className={`px-2 py-1 rounded text-xs ${userPreference==='reiniciar' ? 'bg-[#59b0b6] text-[#222831]' : 'bg-[#DFD0B8] text-[#222831]'}`} onClick={() => handleCommand('reiniciar')}>/reiniciar</button>
-        <button type="button" className={`px-2 py-1 rounded text-xs ${userPreference==='historial' ? 'bg-[#59b0b6] text-[#222831]' : 'bg-[#DFD0B8] text-[#222831]'}`} onClick={() => handleCommand('historial')}>/historial</button>
-        <button type="button" className="px-2 py-1 rounded text-xs bg-red-400 text-white" onClick={() => handleCommand('borrar_historial')}>/borrar_historial</button>
+      
+      <div className="mb-4 flex flex-wrap gap-2">
+        <span className="text-sm font-semibold text-slate-600 flex items-center">Modo de respuesta:</span>
+        <button type="button" className={`px-3 py-1 rounded-xl text-xs font-medium transition-all duration-200 ${userPreference==='corto' ? 'bg-gradient-to-r from-blue-400 to-indigo-500 text-white shadow-md' : 'bg-white/80 text-slate-600 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 border border-slate-200'}`} onClick={() => handleCommand('corto')}>/corto</button>
+        <button type="button" className={`px-3 py-1 rounded-xl text-xs font-medium transition-all duration-200 ${userPreference==='normal' ? 'bg-gradient-to-r from-blue-400 to-indigo-500 text-white shadow-md' : 'bg-white/80 text-slate-600 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 border border-slate-200'}`} onClick={() => handleCommand('normal')}>/normal</button>
+        <button type="button" className={`px-3 py-1 rounded-xl text-xs font-medium transition-all duration-200 ${userPreference==='detallado' ? 'bg-gradient-to-r from-blue-400 to-indigo-500 text-white shadow-md' : 'bg-white/80 text-slate-600 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 border border-slate-200'}`} onClick={() => handleCommand('detallado')}>/detallado</button>
+        <button type="button" className="px-3 py-1 rounded-xl text-xs font-medium transition-all duration-200 bg-white/80 text-slate-600 hover:bg-gradient-to-r hover:from-amber-50 hover:to-orange-50 border border-slate-200" onClick={() => handleCommand('reiniciar')}>/reiniciar</button>
+        <button type="button" className="px-3 py-1 rounded-xl text-xs font-medium transition-all duration-200 bg-white/80 text-slate-600 hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 border border-slate-200" onClick={() => handleCommand('historial')}>/historial</button>
+        <button type="button" className="px-3 py-1 rounded-xl text-xs font-medium transition-all duration-200 bg-gradient-to-r from-red-400 to-rose-500 text-white hover:from-red-500 hover:to-rose-600 shadow-md" onClick={() => handleCommand('borrar_historial')}>/borrar_historial</button>
       </div>
-      {error && <p className="text-red-400 mb-2">{error}</p>}
-      <div className="h-64 overflow-y-auto border rounded p-2 mb-3 bg-[#222831]">
-        {messages.length === 0 && <p className="text-[#DFD0B8]/70 text-center mt-4">Inicia la conversación...</p>}
+      
+      {error && (
+        <div className="p-3 bg-gradient-to-r from-red-50 to-rose-50 border border-red-200 rounded-2xl shadow-sm mb-4">
+          <p className="text-red-600 font-medium">{error}</p>
+        </div>
+      )}
+      
+      <div className="h-80 overflow-y-auto bg-white/60 backdrop-blur-sm border border-white/30 rounded-2xl p-4 mb-4 shadow-inner">
+        {messages.length === 0 && (
+          <div className="flex flex-col items-center justify-center h-full text-center">
+            <div className="w-16 h-16 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mb-4">
+              <span className="text-2xl">💬</span>
+            </div>
+            <p className="text-slate-500 font-medium">Inicia la conversación...</p>
+            <p className="text-slate-400 text-sm mt-1">Haz una pregunta sobre tus datos de red</p>
+          </div>
+        )}
         {messages.map((msg, index) => (
-          <div key={index} className={`mb-2 ${msg.role === 'user' ? 'text-right' : msg.role === 'assistant' ? 'text-left' : 'text-center'}`}>
-            <span 
-              className={`inline-block p-2 rounded-lg ${msg.role === 'user' ? 'bg-[#948979] text-[#222831]' : msg.role === 'assistant' ? 'bg-[#DFD0B8] text-[#222831]' : 'bg-[#e9d7a5] text-[#222831]'}`}
-            >
-              {msg.content}
-            </span>
+          <div key={index} className={`mb-3 ${msg.role === 'user' ? 'flex justify-end' : 'flex justify-start'}`}>
+            <div className={`max-w-[80%] p-3 rounded-2xl shadow-sm ${
+              msg.role === 'user' 
+                ? 'bg-gradient-to-r from-blue-400 to-indigo-500 text-white ml-auto' 
+                : 'bg-white/80 backdrop-blur-sm text-slate-700 border border-white/50'
+            }`}>
+              <div className="flex items-start gap-2">
+                {msg.role === 'assistant' && (
+                  <div className="w-6 h-6 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-white text-xs">🤖</span>
+                  </div>
+                )}
+                <div className="flex-1">
+                  <p className="text-sm leading-relaxed whitespace-pre-line">{msg.content}</p>
+                </div>
+              </div>
+            </div>
           </div>
         ))}
         <div ref={messagesEndRef} />
       </div>
-      <form onSubmit={handleSendMessage} className="flex items-center gap-0">
+      
+      <form onSubmit={handleSendMessage} className="flex gap-2">
         <input
           type="text"
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
           placeholder={sessionId ? `Pregunta sobre la sesión ${sessionId}...` : "Pregunta algo..."}
-          className="flex-grow border rounded-l p-2 bg-[#222831] text-[#DFD0B8] focus:outline-none focus:ring-2 focus:ring-[#e9d7a5] h-12"
+          className="flex-1 p-4 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl text-slate-700 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50"
           disabled={loading}
         />
         <button 
           type="submit"
-          className="bg-[#948979] text-[#222831] px-8 py-3 rounded-r hover:bg-[#e9d7a5] disabled:opacity-50 font-semibold h-12"
-          style={{ minWidth: '110px' }}
+          className={`px-6 py-4 rounded-2xl font-semibold text-white shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${
+            loading 
+              ? 'bg-gradient-to-r from-amber-400 to-orange-500' 
+              : 'bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 hover:shadow-xl'
+          }`}
           disabled={loading || !inputMessage.trim()}
         >
-          {loading ? 'Enviando...' : 'Enviar'}
+          {loading ? (
+            <span className="flex items-center gap-2">
+              <span className="animate-spin">⚙️</span>
+              Enviando...
+            </span>
+          ) : (
+            <span className="flex items-center gap-2">
+              <span>📤</span>
+              Enviar
+            </span>
+          )}
         </button>
       </form>
-      <div className="flex justify-center mt-6">
+      
+      <div className="flex justify-center mt-4">
         <button 
           onClick={handleClearChat}
-          className="px-6 py-2 rounded-xl bg-[#e9d7a5] text-[#222831] font-semibold"
+          className="px-6 py-2 rounded-2xl bg-gradient-to-r from-slate-100 to-slate-200 text-slate-700 font-semibold hover:from-slate-200 hover:to-slate-300 transition-all duration-200 shadow-sm hover:shadow-md"
         >
-          Limpiar chat
+          <span className="flex items-center gap-2">
+            <span>🗑️</span>
+            Limpiar Chat
+          </span>
         </button>
       </div>
     </div>
