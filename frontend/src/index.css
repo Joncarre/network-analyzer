@@ -2,25 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Aplicar fuente Soria globalmente */
+/* Aplicar fuente HK Grotesk globalmente */
 @layer base {
-  html {
-    font-family: 'Soria', Inter, system-ui, Avenir, Helvetica, Arial, sans-serif !important;
-  }
-  
-  body {
-    font-family: 'Soria', Inter, system-ui, Avenir, Helvetica, Arial, sans-serif !important;
-  }
-  
-  * {
-    font-family: 'Soria', Inter, system-ui, Avenir, Helvetica, Arial, sans-serif !important;
+  html, body, * {
+    font-family: 'HK Grotesk', Inter, system-ui, Avenir, Helvetica, Arial, sans-serif !important;
   }
   
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Soria', Inter, system-ui, Avenir, Helvetica, Arial, sans-serif !important;
+    font-family: 'HK Grotesk', Inter, system-ui, Avenir, Helvetica, Arial, sans-serif !important;
   }
   
   p, span, div, button, input, textarea {
-    font-family: 'Soria', Inter, system-ui, Avenir, Helvetica, Arial, sans-serif !important;
+    font-family: 'HK Grotesk', Inter, system-ui, Avenir, Helvetica, Arial, sans-serif !important;
+  }
+}
+
+/* Nunito override */
+@layer base {
+  html, body, * {
+    font-family: 'Nunito', Inter, system-ui, Avenir, Helvetica, Arial, sans-serif !important;
   }
 }

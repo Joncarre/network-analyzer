@@ -6,7 +6,7 @@ export default {
   ],  theme: {
     extend: {
       fontFamily: {
-        'sans': ['Soria', 'Inter', 'system-ui', 'Avenir', 'Helvetica', 'Arial', 'sans-serif'],
+        'sans': ['Nunito', 'Inter', 'system-ui', 'Avenir', 'Helvetica', 'Arial', 'sans-serif'],
       },
     },
   },

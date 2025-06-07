@@ -116,13 +116,11 @@ function CapturePage() {
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
         <div className="text-center mb-12">
-          <div className="inline-block p-6 mb-4 bg-white/60 backdrop-blur-sm rounded-3xl shadow-lg border border-white/30">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent">
-              Captura de Tráfico de Red
+            <h1 className="text-4xl mb-8 font-bold bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent">
+              Captura de tráfico de red
             </h1>
-          </div>
           <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-            Capture paquetes en tiempo real o procese archivos .pcap existentes para análisis detallado
+            Captura paquetes en tiempo real o procese archivos .pcap existentes
           </p>
         </div>
 
@@ -131,16 +129,16 @@ function CapturePage() {
           <div className="bg-white/70 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-white/30 hover:shadow-xl transition-all duration-300">
             <div className="flex items-center mb-6">
               <div className="w-12 h-12 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-2xl flex items-center justify-center mr-4">
-                <span className="text-white text-xl">📡</span>
+                <span className="text-white text-xl">💻</span>
               </div>
-              <h2 className="text-2xl font-bold text-slate-700">Captura en Vivo</h2>
+              <h2 className="text-2xl font-bold text-slate-700">Captura en vivo</h2>
             </div>
             
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-semibold mb-3 text-slate-700">Seleccionar Interfaz de Red</label>
+                <label className="block text-sm font-semibold mb-3 text-slate-700">Seleccionar interfaz de red</label>
                 <select 
-                  className="w-full p-4 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl text-slate-700 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all duration-200 shadow-sm hover:shadow-md"
+                  className="w-full p-4 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl text-slate-700 focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400 transition-all duration-200 shadow-sm hover:shadow-md"
                   value={selectedInterface}
                   onChange={(e) => setSelectedInterface(e.target.value)}
                   disabled={isCapturing || loading}
@@ -158,7 +156,7 @@ function CapturePage() {
                   <label className="block text-sm font-semibold mb-3 text-slate-700">Duración (segundos)</label>
                   <input 
                     type="number"
-                    className="w-full p-4 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl text-slate-700 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all duration-200 shadow-sm hover:shadow-md"
+                    className="w-full p-4 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl text-slate-700 focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400 transition-all duration-200 shadow-sm hover:shadow-md"
                     value={duration}
                     onChange={(e) => setDuration(Number(e.target.value) || 0)}
                     disabled={isCapturing || loading}
@@ -168,10 +166,10 @@ function CapturePage() {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-semibold mb-3 text-slate-700">Límite de Paquetes</label>
+                  <label className="block text-sm font-semibold mb-3 text-slate-700">Límite de paquetes</label>
                   <input 
                     type="number"
-                    className="w-full p-4 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl text-slate-700 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all duration-200 shadow-sm hover:shadow-md"
+                    className="w-full p-4 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl text-slate-700 focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400 transition-all duration-200 shadow-sm hover:shadow-md"
                     value={packetCount}
                     onChange={(e) => setPacketCount(Number(e.target.value) || 0)}
                     disabled={isCapturing || loading}
@@ -197,8 +195,8 @@ function CapturePage() {
                   </span>
                 ) : (
                   <span className="flex items-center justify-center">
-                    <span className="mr-2">▶️</span>
-                    Iniciar Captura
+                    <span className="mr-2"></span>
+                    Iniciar captura
                   </span>
                 )}
               </button>
@@ -217,16 +215,16 @@ function CapturePage() {
               <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-2xl flex items-center justify-center mr-4">
                 <span className="text-white text-xl">📁</span>
               </div>
-              <h2 className="text-2xl font-bold text-slate-700">Procesar Archivo PCAP</h2>
+              <h2 className="text-2xl font-bold text-slate-700">Procesar archivo .pcap</h2>
             </div>
             
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-semibold mb-3 text-slate-700">Seleccionar Fichero .pcap</label>
+                <label className="block text-sm font-semibold mb-3 text-slate-700">Seleccionar fichero .pcap</label>
                 <input 
                   ref={fileInputRef}
                   type="file" 
-                  className="w-full p-4 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl text-slate-700 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200 shadow-sm hover:shadow-md file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-gradient-to-r file:from-blue-50 file:to-indigo-50 file:text-blue-700 hover:file:bg-gradient-to-r hover:file:from-blue-100 hover:file:to-indigo-100"
+                  className="w-full p-4 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl text-slate-700 focus:ring-1 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200 shadow-sm hover:shadow-md file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-gradient-to-r file:from-blue-50 file:to-indigo-50 file:text-blue-700 hover:file:bg-gradient-to-r hover:file:from-blue-100 hover:file:to-indigo-100"
                   accept=".pcap,.pcapng"
                   onChange={handleFileChange}
                   disabled={fileLoading}
@@ -249,8 +247,8 @@ function CapturePage() {
                   </span>
                 ) : (
                   <span className="flex items-center justify-center">
-                    <span className="mr-2">⬆️</span>
-                    Procesar Archivo
+                    <span className="mr-2"></span>
+                    Procesar archivo
                   </span>
                 )}
               </button>
@@ -263,8 +261,8 @@ function CapturePage() {
               
               <div className="mt-8">
                 <h3 className="text-lg font-bold text-slate-700 mb-4 flex items-center">
-                  <span className="mr-2">📋</span>
-                  Archivos .pcap Almacenados
+                  <span className="mr-2"></span>
+                  Archivos .pcap almacenados
                 </h3>
                 {pcapFiles.length === 0 ? (
                   <div className="text-center py-8">
@@ -292,7 +290,7 @@ function CapturePage() {
                             </span>
                           </div>
                           <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                            <span className="text-slate-400">→</span>
+                            <span className="text-slate-400">⮞</span>
                           </div>
                         </div>
                       </div>

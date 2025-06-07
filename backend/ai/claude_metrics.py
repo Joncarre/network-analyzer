@@ -192,7 +192,7 @@ class ClaudeMetrics:
             
         print(f"\n📊 Métricas de la consulta:")
         print(f"   🔢 Tokens: {metrics.input_tokens:,} entrada + {metrics.output_tokens:,} salida = {metrics.total_tokens:,} total")
-        print(f"   ⏱️ Tiempo: {metrics.response_time_ms:.0f}ms ({metrics.tokens_per_second:.1f} tokens/seg)")
+        print(f"   ⌛ Tiempo: {metrics.response_time_ms:.0f}ms ({metrics.tokens_per_second:.1f} tokens/seg)")
         print(f"   💰 Costo: ${metrics.input_cost_usd:.6f} + ${metrics.output_cost_usd:.6f} = ${metrics.total_cost_usd:.6f}")
     
     def print_session_summary(self):
@@ -202,7 +202,7 @@ class ClaudeMetrics:
         print(f"\n📈 Resumen de la sesión:")
         print(f"   📝 Consultas realizadas: {summary.total_queries}")
         print(f"   🔢 Tokens totales: {summary.total_input_tokens:,} entrada + {summary.total_output_tokens:,} salida = {summary.total_tokens:,}")
-        print(f"   ⏱️ Tiempo total: {summary.total_response_time_ms/1000:.1f} segundos")
+        print(f"   ⌛ Tiempo total: {summary.total_response_time_ms/1000:.1f} segundos")
         print(f"   💰 Costo total: ${summary.total_cost_usd:.6f}")
         print(f"   📊 Promedios: {summary.avg_tokens_per_query:.0f} tokens/consulta, {summary.avg_response_time_ms:.0f}ms/consulta, ${summary.avg_cost_per_query_usd:.6f}/consulta")
         print(f"   📁 Métricas guardadas en: {self.metrics_file}")

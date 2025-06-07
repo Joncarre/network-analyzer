@@ -75,20 +75,19 @@ function AnalysisPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50 py-8 px-4">
       <div className="max-w-7xl mx-auto">
-        {/* Header Section */}
-        <div className="text-center mb-12">
-          <div className="inline-block p-6 mb-4 bg-white/60 backdrop-blur-sm rounded-3xl shadow-lg border border-white/30">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 bg-clip-text text-transparent">
-              Análisis de Sesiones
-            </h1>
-          </div>
-          <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-            Explore y analice sus sesiones de captura con la ayuda de inteligencia artificial
-          </p>
-        </div>
+          <div className="text-center mb-12">
+         
+              <h1 className="text-4xl mb-8 font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 bg-clip-text text-transparent">
+                Análisis de sesiones
+              </h1>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Selector de base de datos */}
+            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+              Explora y analiza sesiones de captura con la ayuda del asistente inteligente
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 min-h-[80vh]">
+            {/* Selector de base de datos */}
           <div className="lg:col-span-1 bg-white/70 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-white/30 hover:shadow-xl transition-all duration-300">
             <div className="flex items-center mb-6">
               <div className="w-12 h-12 bg-gradient-to-r from-purple-400 to-pink-500 rounded-2xl flex items-center justify-center mr-4">
@@ -101,7 +100,7 @@ function AnalysisPage() {
               <div>
                 <label className="block text-sm font-semibold mb-3 text-slate-700">Selecciona una base de datos:</label>
                 <select
-                  className="w-full p-4 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl text-slate-700 focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition-all duration-200 shadow-sm hover:shadow-md"
+                  className="w-full p-4 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl text-slate-700 focus:ring-1 focus:ring-purple-400 focus:border-purple-400 transition-all duration-200 shadow-sm hover:shadow-md"
                   value={selectedDbFile || ''}
                   onChange={e => {
                     setSelectedDbFile(e.target.value);
@@ -117,8 +116,8 @@ function AnalysisPage() {
               {loadingSessions && (
                 <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-2xl shadow-sm">
                   <p className="text-slate-700 font-medium flex items-center">
-                    <span className="animate-spin mr-2">⚙️</span>
-                    Cargando sesiones...
+                    <span className="mr-2">⚙️</span>
+                    Aquí aparecerán sus sesiones disponible
                   </p>
                 </div>
               )}
@@ -129,8 +128,8 @@ function AnalysisPage() {
               )}              {!loadingSessions && !errorSessions && (
                 <div className="mt-6">
                   <h3 className="text-lg font-bold text-slate-700 mb-4 flex items-center">
-                    <span className="mr-2">📊</span>
-                    Sesiones Disponibles
+                    <span className="mr-2"></span>
+                    Sesiones disponibles
                   </h3>
                   {sessions.length === 0 ? (
                     <div className="text-center py-8">
@@ -144,7 +143,7 @@ function AnalysisPage() {
                       {sessions.map((session, index) => (
                         <div 
                           key={session.id} 
-                          className={`p-4 hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 transition-all duration-200 cursor-pointer group ${
+                          className={`p-4 hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 transition-all duration-500 cursor-pointer group ${
                             selectedSessionId === session.id 
                               ? 'bg-gradient-to-r from-purple-100 to-pink-100 border-l-4 border-purple-400' 
                               : ''
@@ -162,8 +161,8 @@ function AnalysisPage() {
                               <p className="text-sm text-slate-600 truncate ml-11">Archivo: {session.file_name}</p>
                               <p className="text-sm text-slate-500 ml-11">Fecha: {new Date(session.capture_date).toLocaleString()}</p>
                             </div>
-                            <div className={`transition-all duration-200 ${selectedSessionId === session.id ? 'text-purple-500' : 'opacity-0 group-hover:opacity-100 text-slate-400'}`}>
-                              <span>{selectedSessionId === session.id ? '✓' : '→'}</span>
+                            <div className={`transition-all duration-2000 ${selectedSessionId === session.id ? 'text-purple-500' : 'opacity-0 group-hover:opacity-100 text-slate-400'}`}>
+                              <span>{selectedSessionId === session.id ? '✓' : '⮞'}</span>
                             </div>
                           </div>
                         </div>
@@ -176,7 +175,7 @@ function AnalysisPage() {
           </div>          {/* Columna de Chat */}
           <div className="lg:col-span-2 bg-white/70 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-white/30 hover:shadow-xl transition-all duration-300">
             <div className="flex items-center mb-6">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-2xl flex items-center justify-center mr-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-purple-400 to-pink-500 rounded-2xl flex items-center justify-center mr-4">
                 <span className="text-white text-xl">🤖</span>
               </div>
               <h2 className="text-xl font-bold text-slate-700">Asistente de IA</h2>
@@ -191,7 +190,7 @@ function AnalysisPage() {
                 </div>
                 <h3 className="text-xl font-semibold text-slate-700 mb-2">Selecciona una Base de Datos</h3>
                 <p className="text-slate-500 max-w-md">
-                  Elige una base de datos del panel izquierdo para comenzar a interactuar con el asistente de IA y analizar tus datos de red
+                  Elige una base de datos y sesión para comenzar a interactuar con el asistente de IA y analizar tus datos de red
                 </p>
               </div>
             )}
