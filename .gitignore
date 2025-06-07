@@ -47,6 +47,10 @@ data/pcap_files/*
 data/db_files/*
 !data/db_files/.gitkeep
 
+# Benchmark data files (may be large)
+backend/benchmarks/data/db_files/*
+!backend/benchmarks/data/db_files/.gitkeep
+
 # Configuration and secrets
 .env
 *.keys
