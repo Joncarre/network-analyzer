@@ -1,28 +1,28 @@
-# Network Analyzer 🌐🔍
+# Network Analyzer
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.68+-green.svg)](https://fastapi.tiangolo.com)
 [![React](https://img.shields.io/badge/React-18+-blue.svg)](https://reactjs.org)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-> 🚀 **Herramienta completa para captura, análisis y visualización de tráfico de red con IA**
+> **Herramienta completa para captura, análisis y visualización de tráfico de red con IA**
 
 Network Analyzer es una solución moderna y potente que combina tecnologías avanzadas de backend para la captura de paquetes con una interfaz web intuitiva y accesible. Perfecta para **profesionales de seguridad**, **administradores de red** y **estudiantes** que desean comprender y analizar el tráfico de red de manera eficiente.
 
-## 🎯 ¿Qué hace Network Analyzer?
+## 🚀 ¿Qué funcionalidades ofrece Network Analyzer?
 
-✨ **Captura paquetes de red** en tiempo real desde cualquier interfaz  
-🧠 **Analiza con IA** el tráfico usando consultas en lenguaje natural  
-📊 **Visualiza estadísticas** detalladas y comportamientos de red  
-🛡️ **Detecta anomalías** y posibles amenazas automáticamente  
-💾 **Almacena datos** estructuradamente para análisis posteriores  
-🗣️ **Interactúa conversacionalmente** para explorar los resultados
+**Captura paquetes de red** en tiempo real desde cualquier interfaz  
+**Analiza con IA** el tráfico usando consultas en lenguaje natural  
+**Visualiza estadísticas** detalladas y comportamientos de red  
+ **Detecta anomalías** y posibles amenazas automáticamente  
+**Almacena datos** estructuradamente para análisis posteriores  
+**Interactúa conversacionalmente** para explorar los resultados
 
 ## 🏗️ Arquitectura del Proyecto
 
 El proyecto está construido con una **arquitectura moderna de microservicios** dividida en dos componentes principales:
 
-### 🐍 Backend (Python/FastAPI)
+#### Backend (Python/FastAPI)
 > **El cerebro del sistema** - Maneja toda la lógica de procesamiento y análisis
 
 | Módulo | Descripción | Tecnología |
@@ -33,7 +33,7 @@ El proyecto está construido con una **arquitectura moderna de microservicios** 
 | 🔌 **API REST** | Endpoints para todas las funcionalidades | FastAPI |
 | 🤖 **Integración IA** | Conexión con Claude AI para análisis inteligente | Anthropic Claude |
 
-### ⚛️ Frontend (React)
+#### Frontend (React)
 > **La cara amigable** - Interfaz visual moderna y responsiva
 
 | Componente | Función | Tecnología |
@@ -45,7 +45,7 @@ El proyecto está construido con una **arquitectura moderna de microservicios** 
 
 ## ✨ Funcionalidades Principales
 
-> 🔥 **¡Todo lo que necesitas para análisis de red profesional!**
+> **Todo lo que necesitas para análisis de red profesional**
 
 ### 📡 Captura y Procesamiento
 - 🔴 **Captura en tiempo real** desde cualquier interfaz de red
@@ -67,7 +67,7 @@ El proyecto está construido con una **arquitectura moderna de microservicios** 
 
 ## 💻 Requisitos del Sistema
 
-> ⚡ **Configuración mínima recomendada**
+>  **Configuración mínima recomendada**
 
 | Componente | Requisito | Versión Mínima | Recomendado |
 |------------|-----------|----------------|-------------|
@@ -80,9 +80,9 @@ El proyecto está construido con una **arquitectura moderna de microservicios** 
 
 ## 🛠️ Instalación y Configuración
 
-> 🚀 **¡Puesta en marcha en menos de 10 minutos!**
+> **Puesta en marcha de manera rápida y sencilla**
 
-### 📥 Paso 1: Obtener el Código
+### Paso 1: Obtener el Código
 
 ```bash
 # Clona el repositorio
@@ -90,7 +90,7 @@ git clone https://github.com/tu_usuario/network-analyzer.git
 cd network-analyzer
 ```
 
-### 🐍 Paso 2: Configurar el Backend
+### Paso 2: Configurar el Backend
 
 <details>
 <summary>🔧 <strong>Configuración detallada del backend</strong></summary>
@@ -129,7 +129,7 @@ PCAP_DIRECTORY=./data/pcap_files
 ```
 </details>
 
-### ⚛️ Paso 3: Configurar el Frontend
+### Paso 3: Configurar el Frontend
 
 ```bash
 # Navegar al directorio del frontend
@@ -139,7 +139,7 @@ cd ../frontend
 npm install
 ```
 
-## 🚀 Cómo Usar Network Analyzer
+## Cómo Usar Network Analyzer
 
 > 💡 **¡Es más fácil de lo que piensas!**
 
@@ -173,163 +173,42 @@ npm run dev
 | **6️⃣** | 📊 **Analizar** | Revisa gráficos, métricas y reportes detallados |
 | **7️⃣** | 📋 **Exportar** | Guarda resultados y reportes para uso posterior |
 
-### 🎮 Modos de Uso
 
-<details>
-<summary><strong>🔴 Captura en Tiempo Real</strong></summary>
+## 💬 Ejemplos de onsultas
 
-1. Ve a la sección **"Captura"**
-2. Selecciona tu **interfaz de red**
-3. Configura **duración** y **filtros**
-4. Haz clic en **"Iniciar Captura"**
-5. Observa los paquetes en tiempo real
-</details>
+> **Pregúntale cualquier cosa a tu IA asistente**
 
-<details>
-<summary><strong>📁 Análisis de Archivo PCAP</strong></summary>
-
-1. Ve a la sección **"Captura"**
-2. Haz clic en **"Subir archivo PCAP"**
-3. Selecciona tu archivo desde el disco
-4. Espera a que se procese automáticamente
-5. Explora los resultados en **"Análisis"**
-</details>
-
-## 🧪 Casos de Uso y Tipos de Pruebas
-
-> 🎯 **Descubre todo lo que puedes hacer con Network Analyzer**
-
-### 🔬 Análisis Básico
-| Tipo | Descripción | Ideal para |
-|------|-------------|-----------|
-| **📊 Captura básica** | Monitoreo de tráfico durante tiempo determinado | Administradores de red |
-| **🔍 Exploración general** | Análisis panorámico de protocolos y comunicaciones | Estudiantes y principiantes |
-| **📈 Métricas de rendimiento** | Volúmenes, distribución de protocolos, tiempos | Optimización de red |
-
-### 🛡️ Seguridad y Amenazas
-| Tipo | Descripción | Ideal para |
-|------|-------------|-----------|
-| **🚨 Detección de vulnerabilidades** | Identificación de patrones y anomalías sospechosas | Profesionales de ciberseguridad |
-| **🕵️ Análisis forense** | Investigación detallada de incidentes de seguridad | Equipos de respuesta a incidentes |
-| **🎯 Detección de intrusiones** | Identificación de escaneos y actividad maliciosa | SOCs y equipos de seguridad |
-
-### 🔬 Investigación Avanzada
-| Tipo | Descripción | Ideal para |
-|------|-------------|-----------|
-| **🧪 Comportamientos anómalos** | Análisis de tráfico inusual o fuera de patrones | Investigadores de seguridad |
-| **🔍 Investigación específica** | Filtrado y consultas dirigidas mediante IA | Analistas especializados |
-| **📊 Análisis de tendencias** | Patrones temporales y correlaciones complejas | Data scientists |
-
-## 💬 Ejemplos de Consultas Inteligentes
-
-> 🤖 **Pregúntale cualquier cosa a tu IA asistente**
-
-### 🔍 Consultas Básicas
+### Consultas Básicas
 ```
-💭 "¿Cuáles son los protocolos más utilizados en esta captura?"
-💭 "¿Qué IPs han generado más tráfico?"
-💭 "Muéstrame un resumen de la actividad de red"
-💭 "¿Cuántos paquetes se capturaron en total?"
+ "¿Cuáles son los protocolos más utilizados en esta captura?"
+ "¿Qué IPs han generado más tráfico?"
+ "Muéstrame un resumen de la actividad de red"
+ "¿Cuántos paquetes se capturaron en total?"
 ```
 
-### 🛡️ Análisis de Seguridad
+### Análisis de Seguridad
 ```
-🚨 "¿Hay indicios de escaneos de puertos en esta sesión?"
-🚨 "¿Puedes identificar alguna actividad sospechosa?"
-🚨 "¿Hay patrones de comunicación anómalos?"
-🚨 "¿Detectas algún intento de intrusión?"
-```
-
-### 📊 Análisis Estadístico
-```
-📈 "¿Cuáles son las comunicaciones más frecuentes entre hosts?"
-📈 "¿Qué puertos están siendo más utilizados?"
-📈 "¿Hay algún pico de tráfico inusual?"
-📈 "Analiza la distribución de protocolos por tiempo"
+ "¿Hay indicios de escaneos de puertos en esta sesión?"
+ "¿Puedes identificar alguna actividad sospechosa?"
+ "¿Hay patrones de comunicación anómalos?"
+ "¿Detectas algún intento de intrusión?"
 ```
 
-### 🔬 Investigación Forense
+### Análisis Estadístico
 ```
-🕵️ "¿Qué hizo la IP 192.168.1.100 durante la captura?"
-🕵️ "¿Hay transferencias de archivos sospechosas?"
-🕵️ "¿Qué dispositivos se conectaron durante este período?"
-🕵️ "Analiza las conexiones salientes no autorizadas"
+ "¿Cuáles son las comunicaciones más frecuentes entre hosts?"
+ "¿Qué puertos están siendo más utilizados?"
+ "¿Hay algún pico de tráfico inusual?"
+ "Analiza la distribución de protocolos por tiempo"
 ```
 
-## 🔧 Resolución de Problemas
-
-> 🚑 **Soluciones rápidas a problemas comunes**
-
-### ❌ Problemas de Instalación
-
-<details>
-<summary><strong>🐍 Error con dependencias de Python</strong></summary>
-
-**Problema:** Fallos durante `pip install -r requirements.txt`
-```bash
-# Soluciones:
-1. Actualizar pip: python -m pip install --upgrade pip
-2. Instalar individualmente: pip install fastapi uvicorn pandas
-3. Usar virtual environment: python -m venv venv && source venv/bin/activate
+###  Investigación Forense
 ```
-</details>
-
-<details>
-<summary><strong>🟢 Error con dependencias de Node.js</strong></summary>
-
-**Problema:** Fallos durante `npm install`
-```bash
-# Soluciones:
-1. Limpiar cache: npm cache clean --force
-2. Eliminar node_modules: rm -rf node_modules && npm install
-3. Usar yarn: yarn install
+ "¿Qué hizo la IP 192.168.1.100 durante la captura?"
+ "¿Hay transferencias de archivos sospechosas?"
+ "¿Qué dispositivos se conectaron durante este período?"
+ "Analiza las conexiones salientes no autorizadas"
 ```
-</details>
-
-### 🔌 Problemas de Conectividad
-
-<details>
-<summary><strong>🦈 TShark no encontrado</strong></summary>
-
-**Problema:** Error "TShark not found" o similar
-
-**Soluciones:**
-- **Windows:** Instalar Wireshark desde [wireshark.org](https://wireshark.org)
-- **Linux:** `sudo apt install tshark` o `sudo yum install wireshark`
-- **macOS:** `brew install wireshark`
-- Verificar: `tshark --version`
-</details>
-
-<details>
-<summary><strong>🔐 Problemas de permisos</strong></summary>
-
-**Problema:** Sin acceso a interfaces de red
-
-**Soluciones:**
-- **Windows:** Ejecutar como administrador
-- **Linux/macOS:** `sudo python run.py` o configurar permisos de captura
-- Verificar interfaces: `tshark -D`
-</details>
-
-### 🤖 Problemas con IA
-
-<details>
-<summary><strong>🔑 Error de API Key</strong></summary>
-
-**Problema:** "Invalid API key" o "Authentication failed"
-
-**Soluciones:**
-1. Verificar clave en archivo `.env`
-2. Regenerar API key en [Anthropic Console](https://console.anthropic.com)
-3. Comprobar formato: `ANTHROPIC_API_KEY=sk-...`
-</details>
-
-### 📞 ¿Necesitas Más Ayuda?
-
-Si los problemas persisten:
-1. 📧 **Email:** jonathan.carrero@alumnos.ui1.es
-2. 📋 **Issues:** Abre un issue en GitHub con detalles del error
-3. 📚 **Logs:** Incluye siempre los logs completos del error
 
 ## 📄 Licencia
 
@@ -345,17 +224,12 @@ Este proyecto está licenciado bajo la **Licencia MIT** - consulta el archivo [L
 🎓 **Institución:** Universidad Isabel I  
 
 ### 🤝 Contribuciones
-¡Las contribuciones son bienvenidas! Por favor:
-1. 🍴 **Fork** el proyecto
-2. 🌟 **Crea** una rama para tu feature
-3. 💾 **Commit** tus cambios  
-4. 📤 **Push** a la rama
-5. 📝 **Abre** un Pull Request
-
-### 🐛 Reportar Bugs
-Encontraste un problema? Ayúdanos a mejorarlo:
-- 📋 **Issues:** [GitHub Issues](https://github.com/tu_usuario/network-analyzer/issues)
-- 📧 **Email directo:** Para problemas críticos o dudas específicas
+¡Las contribuciones son siempre bienvenidas, pero por favor:
+1.  **Fork** el proyecto
+2.  **Crea** una rama para tu feature
+3.  **Commit** tus cambios  
+4.  **Push** a la rama
+5.  **Abre** un Pull Request
 
 ---
 
@@ -365,7 +239,7 @@ Encontraste un problema? Ayúdanos a mejorarlo:
 
 [![GitHub stars](https://img.shields.io/github/stars/tu_usuario/network-analyzer.svg?style=social&label=Star&maxAge=2592000)](https://github.com/tu_usuario/network-analyzer/stargazers/)
 
-*Desarrollado con ❤️ para la comunidad de análisis de red*
+*Desarrollado con ❤️ para todos aquellos interesados en el área de la Ciberseguridad*
 
 </div>
 
