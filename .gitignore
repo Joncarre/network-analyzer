@@ -72,3 +72,6 @@ logs/
 
 # Local development directories
 local/
+
+# Project documentation file
+proyecto.txt

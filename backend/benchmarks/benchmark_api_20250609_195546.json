@@ -1,0 +1,70 @@
+{
+  "benchmark_type": "api_rest",
+  "base_url": "http://localhost:8000",
+  "timestamp": "2025-06-09T19:55:46.654167",
+  "results": [
+    {
+      "endpoint": "/",
+      "method": "GET",
+      "iterations": 20,
+      "success_count": 20,
+      "success_rate": 1.0,
+      "avg_response_time": 0.0064783811569213865,
+      "min_response_time": 0.001668691635131836,
+      "max_response_time": 0.025599956512451172,
+      "median_response_time": 0.002252817153930664,
+      "requests_per_second": 154.359549982887,
+      "timestamp": "2025-06-09T19:55:41.956025"
+    },
+    {
+      "endpoint": "/api/capture/interfaces",
+      "method": "GET",
+      "iterations": 15,
+      "success_count": 15,
+      "success_rate": 1.0,
+      "avg_response_time": 0.2879329681396484,
+      "min_response_time": 0.24686074256896973,
+      "max_response_time": 0.386746883392334,
+      "median_response_time": 0.26825475692749023,
+      "requests_per_second": 3.473030568402979,
+      "timestamp": "2025-06-09T19:55:46.276929"
+    },
+    {
+      "endpoint": "/api/database/list-db-files",
+      "method": "GET",
+      "iterations": 15,
+      "success_count": 15,
+      "success_rate": 1.0,
+      "avg_response_time": 0.008652830123901367,
+      "min_response_time": 0.002214670181274414,
+      "max_response_time": 0.024370193481445312,
+      "median_response_time": 0.0029344558715820312,
+      "requests_per_second": 115.56912428428936,
+      "timestamp": "2025-06-09T19:55:46.408099"
+    },
+    {
+      "endpoint": "/api/database/sessions?db_file=database_20250609_134847.db",
+      "method": "GET",
+      "iterations": 10,
+      "success_count": 10,
+      "success_rate": 1.0,
+      "avg_response_time": 0.01848900318145752,
+      "min_response_time": 0.004782438278198242,
+      "max_response_time": 0.08175420761108398,
+      "median_response_time": 0.0062255859375,
+      "requests_per_second": 54.08620411742329,
+      "timestamp": "2025-06-09T19:55:46.599361"
+    },
+    {
+      "endpoint": "/",
+      "test_type": "concurrent",
+      "concurrent_users": 5,
+      "requests_per_user": 10,
+      "total_requests": 50,
+      "total_time": 0.05391502380371094,
+      "avg_response_time": 0.004612159729003906,
+      "throughput_rps": 927.3852902678035,
+      "timestamp": "2025-06-09T19:55:46.653812"
+    }
+  ]
+}

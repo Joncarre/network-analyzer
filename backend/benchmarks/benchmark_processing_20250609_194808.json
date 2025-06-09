@@ -1,0 +1,18 @@
+{
+  "benchmark_type": "pcap_processing",
+  "timestamp": "2025-06-09T19:48:08.861049",
+  "results": [
+    {
+      "file": "10mill.pcap",
+      "file_size_mb": 655.5525817871094,
+      "iterations": 1,
+      "avg_time_seconds": 21327.95380783081,
+      "min_time_seconds": 21327.95380783081,
+      "max_time_seconds": 21327.95380783081,
+      "avg_packets": 10000000,
+      "throughput_packets_per_second": 468.8682322787281,
+      "throughput_mb_per_second": 0.03073677801882783,
+      "timestamp": "2025-06-09T19:48:08.858046"
+    }
+  ]
+}
