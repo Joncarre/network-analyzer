@@ -137,10 +137,9 @@ class APIBenchmark:
         if not self.test_api_availability():
             print("❌ API no disponible. Asegúrate de que el backend esté ejecutándose.")
             return
-        
-        print("✅ API disponible")
+            print("✅ API disponible")
           # Endpoints básicos
-        self.benchmark_endpoint("/", iterations=20)
+        self.benchmark_endpoint("/", iterations=15)
         self.benchmark_endpoint("/api/capture/interfaces", iterations=15)
         self.benchmark_endpoint("/api/database/list-db-files", iterations=15)  # Usando endpoint que funciona
         
