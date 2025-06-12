@@ -48,14 +48,17 @@ class PCAPProcessor:
             pcap_file (str): Ruta al archivo PCAP
             interface (str, opcional): Nombre de la interfaz de captura
             filter_applied (str, opcional): Filtro utilizado durante la captura
-            
-        Returns:
+              Returns:
             int: ID de la sesión de captura creada
         """
         if not os.path.exists(pcap_file):
             raise FileNotFoundError(f"No se encontró el archivo PCAP: {pcap_file}")
             
         try:
+            # Capturar tiempo de inicio para calcular duración
+            import time
+            start_time = time.time()
+            
             # Registro adicional para depuración
             print(f"\n===== INICIO PROCESAMIENTO DE PCAP =====")
             print(f"Archivo: {pcap_file}")
@@ -149,8 +152,7 @@ class PCAPProcessor:
                     print(f"Commit final de {pending_packet_count} paquetes pendientes")
                 except Exception as final_commit_error:
                     print(f"Error durante el commit final de paquetes pendientes: {final_commit_error}")
-            
-            # Actualizar el conteo de paquetes en la sesión
+              # Actualizar el conteo de paquetes en la sesión
             try:
                 capture_session.packet_count = packet_count
                 db_session.commit()
@@ -166,11 +168,16 @@ class PCAPProcessor:
             
             cap.close()
             
+            # Calcular tiempo total de procesamiento
+            end_time = time.time()
+            processing_duration = end_time - start_time
+            
             print(f"\n===== RESUMEN DEL PROCESAMIENTO =====")
             print(f"Total de paquetes examinados (aprox): {packet_number_counter}")
             print(f"Paquetes procesados con éxito: {packet_count}")
             print(f"Paquetes omitidos: {skipped_packets}")
             print(f"Paquetes con errores: {error_packets}")
+            print(f"Tiempo de procesamiento: {processing_duration:.2f} segundos")
             print(f"Base de datos: {self.db_path}")
             
             return capture_session.id

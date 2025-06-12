@@ -1,0 +1,38 @@
+{
+  "session_info": {
+    "session_start": "2025-06-09T23:20:26.126474",
+    "model": "claude-3-opus-20240229",
+    "pricing": {
+      "input_cost_per_million_tokens": 15.0,
+      "output_cost_per_million_tokens": 75.0
+    }
+  },
+  "queries": [
+    {
+      "timestamp": "2025-06-09T23:21:09.228738",
+      "input_tokens": 563,
+      "output_tokens": 329,
+      "total_tokens": 892,
+      "response_time_ms": 13102.862119674683,
+      "tokens_per_second": 25.10901793784337,
+      "input_cost_usd": 0.008445000000000001,
+      "output_cost_usd": 0.024675,
+      "total_cost_usd": 0.03312,
+      "model": "claude-3-opus-20240229",
+      "user_question_length": 60,
+      "response_length": 1104
+    }
+  ],
+  "session_summary": {
+    "session_start": "2025-06-09T23:20:26.126474",
+    "total_queries": 1,
+    "total_input_tokens": 563,
+    "total_output_tokens": 329,
+    "total_tokens": 892,
+    "total_response_time_ms": 13102.862119674683,
+    "total_cost_usd": 0.03312,
+    "avg_tokens_per_query": 892.0,
+    "avg_response_time_ms": 13102.862119674683,
+    "avg_cost_per_query_usd": 0.03312
+  }
+}

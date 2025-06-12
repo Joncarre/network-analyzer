@@ -1,0 +1,66 @@
+{
+  "session_info": {
+    "session_start": "2025-06-10T20:42:44.070444",
+    "model": "claude-3-opus-20240229",
+    "pricing": {
+      "input_cost_per_million_tokens": 15.0,
+      "output_cost_per_million_tokens": 75.0
+    }
+  },
+  "queries": [
+    {
+      "timestamp": "2025-06-10T20:43:15.574019",
+      "input_tokens": 518,
+      "output_tokens": 30,
+      "total_tokens": 548,
+      "response_time_ms": 2219.5920944213867,
+      "tokens_per_second": 13.515996959711886,
+      "input_cost_usd": 0.00777,
+      "output_cost_usd": 0.0022500000000000003,
+      "total_cost_usd": 0.010020000000000001,
+      "model": "claude-3-opus-20240229",
+      "user_question_length": 42,
+      "response_length": 90
+    },
+    {
+      "timestamp": "2025-06-10T20:44:26.501944",
+      "input_tokens": 618,
+      "output_tokens": 204,
+      "total_tokens": 822,
+      "response_time_ms": 8315.736532211304,
+      "tokens_per_second": 24.531801748383764,
+      "input_cost_usd": 0.009269999999999999,
+      "output_cost_usd": 0.0153,
+      "total_cost_usd": 0.024569999999999998,
+      "model": "claude-3-opus-20240229",
+      "user_question_length": 61,
+      "response_length": 694
+    },
+    {
+      "timestamp": "2025-06-10T21:07:06.289215",
+      "input_tokens": 867,
+      "output_tokens": 390,
+      "total_tokens": 1257,
+      "response_time_ms": 14129.814624786377,
+      "tokens_per_second": 27.60121136450481,
+      "input_cost_usd": 0.013005000000000001,
+      "output_cost_usd": 0.029249999999999998,
+      "total_cost_usd": 0.042255,
+      "model": "claude-3-opus-20240229",
+      "user_question_length": 147,
+      "response_length": 1292
+    }
+  ],
+  "session_summary": {
+    "session_start": "2025-06-10T20:42:44.070444",
+    "total_queries": 3,
+    "total_input_tokens": 2003,
+    "total_output_tokens": 624,
+    "total_tokens": 2627,
+    "total_response_time_ms": 24665.143251419067,
+    "total_cost_usd": 0.076845,
+    "avg_tokens_per_query": 875.6666666666666,
+    "avg_response_time_ms": 8221.714417139689,
+    "avg_cost_per_query_usd": 0.025615
+  }
+}
