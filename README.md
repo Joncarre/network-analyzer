@@ -23,7 +23,6 @@ Network Analyzer es una solución moderna y potente que combina tecnologías ava
 El proyecto está construido con una **arquitectura moderna de microservicios** dividida en dos componentes principales:
 
 #### Backend (Python/FastAPI)
-> **El cerebro del sistema** - Maneja toda la lógica de procesamiento y análisis
 
 | Módulo | Descripción | Tecnología |
 |--------|-------------|------------|
@@ -34,7 +33,6 @@ El proyecto está construido con una **arquitectura moderna de microservicios** 
 | **Integración IA** | Conexión con Claude AI para análisis inteligente | Anthropic Claude |
 
 #### Frontend (React)
-> **La cara amigable** - Interfaz visual moderna y responsiva
 
 | Componente | Función | Tecnología |
 |------------|---------|------------|
@@ -54,8 +52,8 @@ El proyecto está construido con una **arquitectura moderna de microservicios** 
 - **Detección automática** de anomalías y patrones sospechosos
 
 ###  Análisis y Visualización
-- 📈 **Estadísticas avanzadas** de tráfico (protocolos, IPs, puertos)
--  **Visualización interactiva** de datos de red
+- **Estadísticas avanzadas** de tráfico (protocolos, IPs, puertos)
+- **Visualización interactiva** de datos de red
 - **Alertas inteligentes** para comportamientos anómalos
 - **Reportes detallados** exportables
 
@@ -93,7 +91,7 @@ cd network-analyzer
 ### Paso 2: Configurar el Backend
 
 <details>
-<summary>🔧 <strong>Configuración detallada del backend</strong></summary>
+<summary><strong>Configuración detallada del backend (desplegable)</strong></summary>
 
 #### 2.1 Crear entorno virtual
 ```bash
@@ -139,7 +137,7 @@ cd ../frontend
 npm install
 ```
 
-## Cómo Usar Network Analyzer
+## Cómo usar Network Analyzer
 
 #### Backend (Servidor API)
 ```bash
@@ -155,7 +153,7 @@ npm run dev
 ```
 **Interfaz disponible en:** `http://localhost:5173`
 
-### 📋 Flujo de Trabajo Típico
+### 📋 Flujo de trabajo típico
 
 | Paso | Acción | Descripción |
 |------|--------|-------------|
@@ -170,9 +168,7 @@ npm run dev
 
 ## 💬 Ejemplos de consultas
 
-> **Pregúntale cualquier cosa a tu IA asistente**
-
-### Consultas Básicas
+### Consultas básicas
 ```
  "¿Cuáles son los protocolos más utilizados en esta captura?"
  "¿Qué IPs han generado más tráfico?"
@@ -180,7 +176,7 @@ npm run dev
  "¿Cuántos paquetes se capturaron en total?"
 ```
 
-### Análisis de Seguridad
+### Análisis de seguridad
 ```
  "¿Hay indicios de escaneos de puertos en esta sesión?"
  "¿Puedes identificar alguna actividad sospechosa?"
@@ -188,7 +184,7 @@ npm run dev
  "¿Detectas algún intento de intrusión?"
 ```
 
-### Análisis Estadístico
+### Análisis estadístico
 ```
  "¿Cuáles son las comunicaciones más frecuentes entre hosts?"
  "¿Qué puertos están siendo más utilizados?"
@@ -196,7 +192,7 @@ npm run dev
  "Analiza la distribución de protocolos por tiempo"
 ```
 
-###  Investigación Forense
+###  Investigación forense
 ```
  "¿Qué hizo la IP 192.168.1.100 durante la captura?"
  "¿Hay transferencias de archivos sospechosas?"
@@ -209,13 +205,13 @@ npm run dev
 Este proyecto está licenciado bajo la **Licencia MIT** - consulta el archivo [LICENSE](LICENSE) para más detalles.
 
 
-###  Desarrollador Principal
+###  Desarrollador principal
 **Jonathan Carrero**  
 **Email:** jonathan.carrero@alumnos.ui1.es  
 **Institución:** Universidad Isabel I  
 
 ### 🤝 Contribuciones
-¡Las contribuciones son siempre bienvenidas, pero por favor:
+Las contribuciones son siempre bienvenidas, pero por favor:
 1.  **Fork** el proyecto
 2.  **Crea** una rama para tu feature
 3.  **Commit** tus cambios  
