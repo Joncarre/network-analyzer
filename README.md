@@ -10,13 +10,12 @@
 Network Analyzer es una solución moderna y potente que combina tecnologías avanzadas de backend para la captura de paquetes con una interfaz web intuitiva y accesible. Perfecta para **profesionales de seguridad**, **administradores de red** y **estudiantes** que desean comprender y analizar el tráfico de red de manera eficiente.
 
 ## 🚀 ¿Qué funcionalidades ofrece Network Analyzer?
-
-**Captura paquetes de red** en tiempo real desde cualquier interfaz  
-**Analiza con IA** el tráfico usando consultas en lenguaje natural  
-**Visualiza estadísticas** detalladas y comportamientos de red  
- **Detecta anomalías** y posibles amenazas automáticamente  
-**Almacena datos** estructuradamente para análisis posteriores  
-**Interactúa conversacionalmente** para explorar los resultados
+- **Captura paquetes de red** en tiempo real desde cualquier interfaz  
+- **Analiza con IA** el tráfico usando consultas en lenguaje natural  
+- **Visualiza estadísticas** detalladas y comportamientos de red  
+- **Detecta anomalías** y posibles amenazas automáticamente  
+- **Almacena datos** estructuradamente para análisis posteriores  
+- **Interactúa conversacionalmente** para explorar los resultados
 
 ## 🏗️ Arquitectura del Proyecto
 
@@ -113,15 +112,15 @@ pip install -r requirements.txt
 #### 2.3 Configurar variables de entorno
 Crea un archivo `.env` en la carpeta `backend` con:
 ```env
-# 🔑 Configuración de IA
+# Configuración de IA
 ANTHROPIC_API_KEY=tu_clave_api_de_anthropic
 
-# 🌐 Configuración del servidor
+# Configuración del servidor
 HOST=localhost
 PORT=8000
 DEBUG=true
 
-# 📁 Configuración de directorios
+# Configuración de directorios
 DATABASE_DIRECTORY=./data/db_files
 PCAP_DIRECTORY=./data/pcap_files
 ```
