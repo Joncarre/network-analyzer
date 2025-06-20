@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Dict, Any, List, Optional
 import os
-from sqlalchemy import create_engine, func
+from sqlalchemy import create_engine, func, or_
 from sqlalchemy.orm import sessionmaker
 import glob
 from datetime import datetime
@@ -293,8 +293,7 @@ async def process_chat(
                         "total_volume": total_packets,
                         "severity": "HIGH"
                     }
-                
-                # 4. Análisis de RST storms
+                  # 4. Análisis de RST storms
                 if tcp_rst_packets > tcp_packets * 0.3:  # Más del 30% son RST
                     suspicious_patterns["rst_storm"] = {
                         "rst_packets": tcp_rst_packets,
@@ -302,6 +301,176 @@ async def process_chat(
                         "severity": "MEDIUM"
                     }
                 
+                # ======= ANÁLISIS AVANZADO DE ANOMALÍAS =======
+                
+                # Análisis de TTL inusuales
+                ttl_analysis = db_session.query(Packet.ip_ttl, func.count(Packet.id).label('count')).filter(
+                    Packet.ip_ttl.isnot(None)
+                ).group_by(Packet.ip_ttl).all()
+                
+                suspicious_ttl = []
+                for ttl, count in ttl_analysis:
+                    if ttl and ttl < 10:  # TTL muy bajo = posible traceroute/escaneo
+                        suspicious_ttl.append({"ttl": ttl, "count": count, "risk": "high", "description": "Possible traceroute/scanning"})
+                    elif ttl and ttl > 250:  # TTL muy alto = posible manipulación
+                        suspicious_ttl.append({"ttl": ttl, "count": count, "risk": "medium", "description": "Unusually high TTL"})
+
+                # Detección avanzada de escaneo de puertos por IP origen
+                port_scan_detection = db_session.query(
+                    Packet.src_ip,
+                    func.count(func.distinct(Packet.dst_port)).label('unique_ports'),
+                    func.count(Packet.id).label('total_packets')
+                ).filter(
+                    Packet.dst_port.isnot(None),
+                    Packet.src_ip.isnot(None)
+                ).group_by(Packet.src_ip).having(
+                    func.count(func.distinct(Packet.dst_port)) > 50  # Más de 50 puertos únicos
+                ).all()
+                
+                port_scanners = []
+                for src_ip, unique_ports, packets in port_scan_detection:
+                    intensity = "critical" if unique_ports > 1000 else "high" if unique_ports > 200 else "medium"
+                    port_scanners.append({
+                        "ip": src_ip,
+                        "unique_ports_scanned": unique_ports,
+                        "total_packets": packets,
+                        "scan_intensity": intensity,
+                        "attack_type": "Port Scan"
+                    })
+
+                # Análisis de fragmentación IP sospechosa
+                fragmented_packets = db_session.query(func.count(Packet.id)).filter(
+                    or_(Packet.ip_flag_mf == True, Packet.ip_fragment_offset > 0)
+                ).scalar() or 0
+                
+                fragmentation_percentage = round((fragmented_packets / total_packets * 100), 2) if total_packets > 0 else 0
+
+                # Paquetes con tamaños anómalos
+                tiny_packets = db_session.query(func.count(Packet.id)).filter(
+                    Packet.packet_length < 60  # Menores a 60 bytes
+                ).scalar() or 0
+                
+                jumbo_packets = db_session.query(func.count(Packet.id)).filter(
+                    Packet.packet_length > 1500  # Mayores a MTU estándar
+                ).scalar() or 0                # Análisis de flags TCP sospechosos adicionales
+                
+                # Christmas tree packets (múltiples flags activos simultáneamente)
+                christmas_tree = db_session.query(func.count(Packet.id)).filter(
+                    Packet.transport_protocol == 'TCP',
+                    Packet.tcp_flag_syn == True,
+                    Packet.tcp_flag_fin == True,
+                    Packet.tcp_flag_rst == True,
+                    Packet.tcp_flag_psh == True,
+                    Packet.tcp_flag_urg == True
+                ).scalar() or 0
+
+                # NULL scan (sin flags)
+                null_scan = db_session.query(func.count(Packet.id)).filter(
+                    Packet.transport_protocol == 'TCP',
+                    Packet.tcp_flag_syn == False,
+                    Packet.tcp_flag_fin == False,
+                    Packet.tcp_flag_rst == False,
+                    Packet.tcp_flag_psh == False,
+                    Packet.tcp_flag_urg == False,
+                    Packet.tcp_flag_ack == False
+                ).scalar() or 0
+
+                # FIN scan
+                fin_scan = db_session.query(func.count(Packet.id)).filter(
+                    Packet.transport_protocol == 'TCP',
+                    Packet.tcp_flag_fin == True,
+                    Packet.tcp_flag_syn == False,
+                    Packet.tcp_flag_ack == False
+                ).scalar() or 0
+
+                # Análisis de distribución temporal para detectar ráfagas
+                # Obtener todos los timestamps para análisis temporal detallado
+                all_timestamps = db_session.query(Packet.timestamp).order_by(Packet.timestamp).all()
+                
+                temporal_anomalies = {}
+                if len(all_timestamps) > 1:
+                    timestamps = [t[0] for t in all_timestamps]
+                    first_time, last_time = timestamps[0], timestamps[-1]
+                    duration = last_time - first_time
+                    
+                    # Dividir en intervalos de 10 segundos para detectar ráfagas
+                    interval_size = 10  # segundos
+                    intervals = {}
+                    
+                    for ts in timestamps:
+                        interval_key = int((ts - first_time) / interval_size)
+                        intervals[interval_key] = intervals.get(interval_key, 0) + 1
+                    
+                    if intervals:
+                        avg_per_interval = sum(intervals.values()) / len(intervals)
+                        max_per_interval = max(intervals.values())
+                        
+                        if max_per_interval > avg_per_interval * 20:  # Pico 20x mayor que promedio
+                            temporal_anomalies["traffic_burst"] = {
+                                "max_packets_per_10s": max_per_interval,
+                                "average_packets_per_10s": round(avg_per_interval, 2),
+                                "burst_ratio": round(max_per_interval / avg_per_interval, 2),
+                                "severity": "HIGH"
+                            }
+
+                # Análisis de comunicaciones asimétricas (posible spoofing)
+                asymmetric_comms = db_session.query(
+                    Packet.src_ip,
+                    Packet.dst_ip,
+                    func.count(Packet.id).label('outbound'),
+                ).group_by(Packet.src_ip, Packet.dst_ip).subquery()
+
+                # Buscar pares con comunicación muy asimétrica
+                comm_pairs = db_session.query(asymmetric_comms).all()
+                asymmetric_patterns = []
+                
+                for src, dst, out_count in comm_pairs:
+                    # Buscar tráfico de vuelta
+                    in_count = db_session.query(func.count(Packet.id)).filter(
+                        Packet.src_ip == dst,
+                        Packet.dst_ip == src
+                    ).scalar() or 0
+                    
+                    if out_count > 100 and (in_count == 0 or out_count / in_count > 50):
+                        asymmetric_patterns.append({
+                            "src_ip": src,
+                            "dst_ip": dst,
+                            "outbound_packets": out_count,
+                            "inbound_packets": in_count,
+                            "asymmetry_ratio": "∞" if in_count == 0 else round(out_count / in_count, 2),
+                            "possible_attack": "IP Spoofing or DDoS"
+                        })
+
+                # Compilar análisis completo de anomalías
+                advanced_anomaly_analysis = {
+                    "suspicious_ttl_values": suspicious_ttl,
+                    "port_scanning_detected": {
+                        "scanner_count": len(port_scanners),
+                        "scanners": port_scanners
+                    },
+                    "fragmentation_analysis": {
+                        "fragmented_packets": fragmented_packets,
+                        "fragmentation_percentage": fragmentation_percentage,
+                        "potential_evasion": fragmentation_percentage > 5.0
+                    },
+                    "packet_size_anomalies": {
+                        "tiny_packets": tiny_packets,
+                        "jumbo_packets": jumbo_packets,
+                        "size_distribution_suspicious": tiny_packets > total_packets * 0.1 or jumbo_packets > total_packets * 0.1
+                    },
+                    "advanced_tcp_attacks": {
+                        "christmas_tree_packets": christmas_tree,
+                        "null_scan_packets": null_scan,
+                        "fin_scan_packets": fin_scan,
+                        "stealth_scan_detected": christmas_tree > 0 or null_scan > 100 or fin_scan > 100
+                    },
+                    "temporal_anomalies": temporal_anomalies,
+                    "asymmetric_communications": {
+                        "suspicious_pairs": asymmetric_patterns,
+                        "potential_spoofing": len(asymmetric_patterns) > 0
+                    }
+                }
+
                 # Anomalías detectadas automáticamente
                 anomaly_count = db_session.query(func.count(Anomaly.id)).scalar()
                 anomaly_types = db_session.query(
@@ -332,8 +501,8 @@ async def process_chat(
                         "average": round(avg_packet_size, 2) if avg_packet_size else 0,
                         "maximum": max_packet_size or 0,
                         "minimum": min_packet_size or 0
-                    },
-                    "suspicious_patterns_detected": suspicious_patterns,
+                    },                    "suspicious_patterns_detected": suspicious_patterns,
+                    "advanced_anomaly_analysis": advanced_anomaly_analysis,
                     "anomalies": {
                         "total_count": anomaly_count,
                         "by_type": [{"type": anom_type, "count": count} for anom_type, count in anomaly_types]

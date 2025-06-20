@@ -27,43 +27,43 @@ El proyecto está construido con una **arquitectura moderna de microservicios** 
 
 | Módulo | Descripción | Tecnología |
 |--------|-------------|------------|
-| 📡 **Captura** | Interfaces con TShark para captura de paquetes | TShark/Wireshark |
-| ⚙️ **Procesamiento** | Convierte archivos PCAP a estructuras analizables | Pandas/Python |
-| 🗄️ **Base de datos** | Almacenamiento SQLite de sesiones y anomalías | SQLite |
-| 🔌 **API REST** | Endpoints para todas las funcionalidades | FastAPI |
-| 🤖 **Integración IA** | Conexión con Claude AI para análisis inteligente | Anthropic Claude |
+| **Captura** | Interfaces con TShark para captura de paquetes | TShark/Wireshark |
+| **Procesamiento** | Convierte archivos PCAP a estructuras analizables | Pandas/Python |
+| **Base de datos** | Almacenamiento SQLite de sesiones y anomalías | SQLite |
+| **API REST** | Endpoints para todas las funcionalidades | FastAPI |
+| **Integración IA** | Conexión con Claude AI para análisis inteligente | Anthropic Claude |
 
 #### Frontend (React)
 > **La cara amigable** - Interfaz visual moderna y responsiva
 
 | Componente | Función | Tecnología |
 |------------|---------|------------|
-| 🎨 **Interfaz visual** | Diseño moderno y responsivo | React + TailwindCSS |
-| 📥 **Captura** | Panel para iniciar capturas o subir PCAPs | React Components |
-| 📊 **Análisis** | Visualización de paquetes y estadísticas | Chart.js |
-| 💬 **Chat IA** | Interfaz conversacional para consultas | WebSocket + React |
+| **Interfaz visual** | Diseño moderno y responsivo | React + TailwindCSS |
+| **Captura** | Panel para iniciar capturas o subir PCAPs | React Components |
+| **Análisis** | Visualización de paquetes y estadísticas | Chart.js |
+| **Chat IA** | Interfaz conversacional para consultas | WebSocket + React |
 
 ## ✨ Funcionalidades Principales
 
 > **Todo lo que necesitas para análisis de red profesional**
 
-### 📡 Captura y Procesamiento
-- 🔴 **Captura en tiempo real** desde cualquier interfaz de red
-- 📁 **Procesamiento de archivos PCAP** existentes
-- 💾 **Almacenamiento inteligente** en bases de datos SQLite optimizadas
-- 🔍 **Detección automática** de anomalías y patrones sospechosos
+###  Captura y Procesamiento
+- **Captura en tiempo real** desde cualquier interfaz de red
+- **Procesamiento de archivos PCAP** existentes
+- **Almacenamiento inteligente** en bases de datos SQLite optimizadas
+- **Detección automática** de anomalías y patrones sospechosos
 
-### 📊 Análisis y Visualización
+###  Análisis y Visualización
 - 📈 **Estadísticas avanzadas** de tráfico (protocolos, IPs, puertos)
-- 🎯 **Visualización interactiva** de datos de red
-- 🚨 **Alertas inteligentes** para comportamientos anómalos
-- 📋 **Reportes detallados** exportables
+-  **Visualización interactiva** de datos de red
+- **Alertas inteligentes** para comportamientos anómalos
+- **Reportes detallados** exportables
 
-### 🤖 Inteligencia Artificial
-- 💬 **Chat conversacional** para consultas en lenguaje natural
-- 🎛️ **Modos de respuesta configurables** (corto, normal, detallado)
-- 🧠 **Análisis inteligente** de patrones de tráfico
-- 🔮 **Predicción de amenazas** basada en comportamientos
+###  Inteligencia Artificial
+- **Chat conversacional** para consultas en lenguaje natural
+- **Modos de respuesta configurables** (corto, normal, detallado)
+- **Análisis inteligente** de patrones de tráfico
+- **Predicción de amenazas** basada en comportamientos
 
 ## 💻 Requisitos del Sistema
 
@@ -71,12 +71,12 @@ El proyecto está construido con una **arquitectura moderna de microservicios** 
 
 | Componente | Requisito | Versión Mínima | Recomendado |
 |------------|-----------|----------------|-------------|
-| 🐍 **Python** | Intérprete Python | 3.8+ | 3.10+ |
-| 🟢 **Node.js** | Runtime JavaScript | 14.x+ | 18.x+ |
-| 🦈 **TShark** | Analizador de paquetes | Última | Wireshark suite |
-| 🌐 **Interfaz de red** | Acceso a adaptadores | Requerido | Permisos admin |
-| 💾 **Memoria RAM** | Para procesamiento | 4GB+ | 8GB+ |
-| 💿 **Espacio en disco** | Para almacenamiento | 1GB+ | 10GB+ |
+| **Python** | Intérprete Python | 3.8+ | 3.10+ |
+| **Node.js** | Runtime JavaScript | 14.x+ | 18.x+ |
+| **TShark** | Analizador de paquetes | Última | Wireshark suite |
+| **Interfaz de red** | Acceso a adaptadores | Requerido | Permisos admin |
+| **Memoria RAM** | Para procesamiento | 4GB+ | 8GB+ |
+| **Espacio en disco** | Para almacenamiento | 1GB+ | 10GB+ |
 
 ## 🛠️ Instalación y Configuración
 
@@ -141,40 +141,34 @@ npm install
 
 ## Cómo Usar Network Analyzer
 
-> 💡 **¡Es más fácil de lo que piensas!**
-
-### 🟢 Iniciar el Sistema
-
 #### Backend (Servidor API)
 ```bash
 cd backend
 python run.py
 ```
-🌐 **Servidor disponible en:** `http://localhost:8000`
+ **Servidor disponible en:** `http://localhost:8000`
 
 #### Frontend (Interfaz Web)
 ```bash
 cd frontend  
 npm run dev
 ```
-🎨 **Interfaz disponible en:** `http://localhost:5173`
+**Interfaz disponible en:** `http://localhost:5173`
 
 ### 📋 Flujo de Trabajo Típico
 
-> 🎯 **Sigue estos pasos para un análisis completo**
-
 | Paso | Acción | Descripción |
 |------|--------|-------------|
-| **1️⃣** | 🎯 **Inicializar** | Accede a la interfaz web y selecciona tu modo de trabajo |
-| **2️⃣** | 📡 **Capturar** | Inicia captura en vivo o sube un archivo PCAP existente |
-| **3️⃣** | ⏳ **Procesar** | Espera mientras el sistema procesa y analiza los datos |
-| **4️⃣** | 🔍 **Explorar** | Navega por paquetes, anomalías y estadísticas generadas |
-| **5️⃣** | 💬 **Consultar** | Usa el chat IA para hacer preguntas específicas |
-| **6️⃣** | 📊 **Analizar** | Revisa gráficos, métricas y reportes detallados |
-| **7️⃣** | 📋 **Exportar** | Guarda resultados y reportes para uso posterior |
+| **1️⃣** | **Inicializar** | Accede a la interfaz web y selecciona tu modo de trabajo |
+| **2️⃣** | **Capturar** | Inicia captura en vivo o sube un archivo PCAP existente |
+| **3️⃣** | **Procesar** | Espera mientras el sistema procesa y analiza los datos |
+| **4️⃣** | **Explorar** | Navega por paquetes, anomalías y estadísticas generadas |
+| **5️⃣** | **Consultar** | Usa el chat IA para hacer preguntas específicas |
+| **6️⃣** | **Analizar** | Revisa gráficos, métricas y reportes detallados |
+| **7️⃣** | **Exportar** | Guarda resultados y reportes para uso posterior |
 
 
-## 💬 Ejemplos de onsultas
+## 💬 Ejemplos de consultas
 
 > **Pregúntale cualquier cosa a tu IA asistente**
 
@@ -214,14 +208,11 @@ npm run dev
 
 Este proyecto está licenciado bajo la **Licencia MIT** - consulta el archivo [LICENSE](LICENSE) para más detalles.
 
-## 📞 Contacto y Soporte
 
-> 💬 **¡Estamos aquí para ayudarte!**
-
-### 👨‍💼 Desarrollador Principal
+###  Desarrollador Principal
 **Jonathan Carrero**  
-📧 **Email:** jonathan.carrero@alumnos.ui1.es  
-🎓 **Institución:** Universidad Isabel I  
+**Email:** jonathan.carrero@alumnos.ui1.es  
+**Institución:** Universidad Isabel I  
 
 ### 🤝 Contribuciones
 ¡Las contribuciones son siempre bienvenidas, pero por favor:
@@ -237,9 +228,7 @@ Este proyecto está licenciado bajo la **Licencia MIT** - consulta el archivo [L
 
 **⭐ Si este proyecto te ha sido útil, considera darle una estrella en GitHub ⭐**
 
-[![GitHub stars](https://img.shields.io/github/stars/tu_usuario/network-analyzer.svg?style=social&label=Star&maxAge=2592000)](https://github.com/tu_usuario/network-analyzer/stargazers/)
-
-*Desarrollado con ❤️ para todos aquellos interesados en el área de la Ciberseguridad*
+[![GitHub stars](https://img.shields.io/github/stars/tu_usuario/network-analyzer.svg?style=social&label=Star&maxAge=2592000)](https://github.com/joncarre/network-analyzer/stargazers/)
 
 </div>
 

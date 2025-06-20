@@ -1,0 +1,94 @@
+{
+  "session_info": {
+    "session_start": "2025-06-19T12:30:20.848309",
+    "model": "claude-3-opus-20240229",
+    "pricing": {
+      "input_cost_per_million_tokens": 15.0,
+      "output_cost_per_million_tokens": 75.0
+    }
+  },
+  "queries": [
+    {
+      "timestamp": "2025-06-19T12:30:48.666494",
+      "input_tokens": 2908,
+      "output_tokens": 670,
+      "total_tokens": 3578,
+      "response_time_ms": 22678.797006607056,
+      "tokens_per_second": 29.5430132297056,
+      "input_cost_usd": 0.04362,
+      "output_cost_usd": 0.05025,
+      "total_cost_usd": 0.09387000000000001,
+      "model": "claude-3-opus-20240229",
+      "user_question_length": 55,
+      "response_length": 2041
+    },
+    {
+      "timestamp": "2025-06-19T12:32:40.076312",
+      "input_tokens": 3427,
+      "output_tokens": 834,
+      "total_tokens": 4261,
+      "response_time_ms": 29086.601972579956,
+      "tokens_per_second": 28.672995243178107,
+      "input_cost_usd": 0.051405,
+      "output_cost_usd": 0.06255,
+      "total_cost_usd": 0.113955,
+      "model": "claude-3-opus-20240229",
+      "user_question_length": 61,
+      "response_length": 2176
+    },
+    {
+      "timestamp": "2025-06-19T12:40:58.625927",
+      "input_tokens": 4287,
+      "output_tokens": 1150,
+      "total_tokens": 5437,
+      "response_time_ms": 39163.28167915344,
+      "tokens_per_second": 29.364239938353872,
+      "input_cost_usd": 0.064305,
+      "output_cost_usd": 0.08625,
+      "total_cost_usd": 0.150555,
+      "model": "claude-3-opus-20240229",
+      "user_question_length": 83,
+      "response_length": 2944
+    },
+    {
+      "timestamp": "2025-06-19T13:07:47.999073",
+      "input_tokens": 5412,
+      "output_tokens": 43,
+      "total_tokens": 5455,
+      "response_time_ms": 3288.170576095581,
+      "tokens_per_second": 13.077180457912494,
+      "input_cost_usd": 0.08118,
+      "output_cost_usd": 0.003225,
+      "total_cost_usd": 0.08440500000000001,
+      "model": "claude-3-opus-20240229",
+      "user_question_length": 46,
+      "response_length": 141
+    },
+    {
+      "timestamp": "2025-06-19T13:08:14.812348",
+      "input_tokens": 5477,
+      "output_tokens": 36,
+      "total_tokens": 5513,
+      "response_time_ms": 3136.669158935547,
+      "tokens_per_second": 11.477142846718612,
+      "input_cost_usd": 0.082155,
+      "output_cost_usd": 0.0027,
+      "total_cost_usd": 0.084855,
+      "model": "claude-3-opus-20240229",
+      "user_question_length": 46,
+      "response_length": 105
+    }
+  ],
+  "session_summary": {
+    "session_start": "2025-06-19T12:30:20.848309",
+    "total_queries": 5,
+    "total_input_tokens": 21511,
+    "total_output_tokens": 2733,
+    "total_tokens": 24244,
+    "total_response_time_ms": 97353.52039337158,
+    "total_cost_usd": 0.52764,
+    "avg_tokens_per_query": 4848.8,
+    "avg_response_time_ms": 19470.704078674316,
+    "avg_cost_per_query_usd": 0.105528
+  }
+}
