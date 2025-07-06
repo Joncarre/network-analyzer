@@ -219,12 +219,4 @@ Las contribuciones son siempre bienvenidas, pero por favor:
 
 ---
 
-<div align="center">
-
-**⭐ Si este proyecto te ha sido útil, considera darle una estrella en GitHub ⭐**
-
-[![GitHub stars](https://img.shields.io/github/stars/tu_usuario/network-analyzer.svg?style=social&label=Star&maxAge=2592000)](https://github.com/joncarre/network-analyzer)
-
-</div>
-
 ---
