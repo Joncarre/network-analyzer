@@ -1,12 +1,5 @@
 # Network Analyzer
 
-[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.68+-green.svg)](https://fastapi.tiangolo.com)
-[![React](https://img.shields.io/badge/React-18+-blue.svg)](https://reactjs.org)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-
-> **Herramienta completa para captura, análisis y visualización de tráfico de red con IA**
-
 Network Analyzer es una solución moderna y potente que combina tecnologías avanzadas de backend para la captura de paquetes con una interfaz web intuitiva y accesible. Perfecta para **profesionales de seguridad**, **administradores de red** y **estudiantes** que desean comprender y analizar el tráfico de red de manera eficiente.
 
 ---
@@ -227,3 +220,8 @@ Las contribuciones son siempre bienvenidas, pero por favor:
 
 ---
 *Created by Jonathan Carrero*
+
+[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.68+-green.svg)](https://fastapi.tiangolo.com)
+[![React](https://img.shields.io/badge/React-18+-blue.svg)](https://reactjs.org)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
