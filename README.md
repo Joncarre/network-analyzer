@@ -13,7 +13,7 @@ Network Analyzer es una solución moderna y potente que combina tecnologías ava
 Existe una demo disponible en Google Drive por si se desea ver en detalle el flujo de trabajo y las funcionalidades principales de Network Analyzer. La demo se encuentra disponible en el siguiente enlace [Google Drive](https://drive.google.com/file/d/1qHAEe0JCK_XULsnjO2A1drE9YEcvGZdx/view?usp=sharing). Si lo desea, también puede acceder a la demo escaneando el siguiente código QR:
 
 <div align="center">
-    <img src="frontend/public/scan.png" alt="QR Code para acceder a la demo" width="30%" />
+    <img src="frontend/public/scan.png" alt="QR Code para acceder a la demo" width="40%" />
 </div>
 
 
