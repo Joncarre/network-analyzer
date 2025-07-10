@@ -9,6 +9,9 @@
 
 Network Analyzer es una solución moderna y potente que combina tecnologías avanzadas de backend para la captura de paquetes con una interfaz web intuitiva y accesible. Perfecta para **profesionales de seguridad**, **administradores de red** y **estudiantes** que desean comprender y analizar el tráfico de red de manera eficiente.
 
+---
+Existe una demo en Google Drive por si se desea ver en detalle el flujo de trabajo y las funcionalidades principales de Network Analyzer. La demo se encuentra disponible en el siguiente enlace [Google Drive](https://drive.google.com/file/d/1qHAEe0JCK_XULsnjO2A1drE9YEcvGZdx/view?usp=sharing).
+
 ## 🚀 ¿Qué funcionalidades ofrece Network Analyzer?
 - **Captura paquetes de red** en tiempo real desde cualquier interfaz  
 - **Analiza con IA** el tráfico usando consultas en lenguaje natural  
@@ -218,5 +221,4 @@ Las contribuciones son siempre bienvenidas, pero por favor:
 5.  **Abre** un Pull Request
 
 ---
-
----
+*Created by Jonathan Carrero*
