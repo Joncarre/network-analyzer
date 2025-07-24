@@ -11,26 +11,26 @@ sistema lanza entonces un proceso secundario usando TShark, que se encarga de in
 paquete que atraviesa la interfaz seleccionada.
 
 <div align="center">
-    <img src="public/i1.png" alt="Captura de paquetes" width="75%">
+    <img src="i1.png" alt="Captura de paquetes" width="75%">
 </div>
 
 Una vez finalizada la captura se da paso al procesamiento de los datos, tarea que se ejecuta de manera automática. El sistema realiza algunas validaciones: verifica que el archivo `.pcap` seleccionado por el usuario no esté corrupto, que tenga un formato compatible y estima el tiempo que tomará el procesamiento según su tamaño. 
 
 <div align="center">
-    <img src="public/i2.png" alt="Procesamiento de datos" width="75%">
+    <img src="i2.png" alt="Procesamiento de datos" width="75%">
 </div>
 
 Cada paquete capturado es entonces desglosado meticulosamente por capas y la información se almacena en una base de datos SQLite optimizada, lo que genera el archivo `.db` que se utilizará posteriormente.
 
 <div align="center">
-    <img src="public/i3.png" alt="Almacenamiento en base de datos" width="75%">
+    <img src="i3.png" alt="Almacenamiento en base de datos" width="75%">
 </div>
 
 Es en este último paso donde Network Analyzer se vuelve realmente útil. Cuando el usuario selecciona una sesión para su análisis, se carga automáticamente un resumen estadístico de esa captura. Se configura un prompt especializado para que Claude entienda que debe actuar como analista de red, y se prepara un historial vacío para la conversación, asegurando un análisis limpio desde el inicio. En cada consulta, el sistema interpreta lo que el usuario quiere
 saber mediante técnicas de procesamiento de lenguaje natural. Finalmente, la IA genera una respuesta adaptada al nivel de detalle que el usuario desee: puede ser breve, normal o muy técnica. La respuesta no solo incluye datos concretos, sino también interpretaciones, explicaciones y recomendaciones. Se preserva el contexto de la conversación, por lo que es posible hacer preguntas encadenadas sin perder el hilo.
 
 <div align="center">
-    <img src="public/i4.png" alt="Análisis con IA" width="75%">
+    <img src="i4.png" alt="Análisis con IA" width="75%">
 </div>
 
 ---
