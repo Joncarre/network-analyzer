@@ -1,0 +1,12 @@
+{
+  "session_info": {
+    "session_start": "2025-07-24T01:09:47.286875",
+    "model": "claude-3-opus-20240229",
+    "pricing": {
+      "input_cost_per_million_tokens": 15.0,
+      "output_cost_per_million_tokens": 75.0
+    }
+  },
+  "queries": [],
+  "session_summary": {}
+}
