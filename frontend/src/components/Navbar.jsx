@@ -5,7 +5,7 @@ import '../holographic.css';
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   return (
-    <nav className="bg-transparent backdrop-blur-sm border-b border-white/30 shadow-lg sticky top-0 z-50">
+    <nav className="bg-gray-800/80 backdrop-blur-sm border-b border-gray-700/50 shadow-lg sticky top-0 z-50">
       <div className="container mx-auto px-6 py-4">
         <div className="flex justify-between items-center">
           <div className="flex items-center">
@@ -14,7 +14,7 @@ const Navbar = () => {
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center">
                   <span className="text-white text-xl font-bold">🛖</span>
                 </div>
-                <span className="text-2xl font-bold text-gray-700 bg-clip-text text-transparent">
+                <span className="text-2xl font-bold text-gray-300 bg-clip-text text-transparent">
                   
                 </span>
               </Link>
@@ -25,21 +25,21 @@ const Navbar = () => {
           <div className="hidden md:flex space-x-2">
             <Link 
               to="/" 
-              className="px-4 py-2 rounded-2xl text-slate-700 font-medium hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:text-blue-600 transition-all duration-200 flex items-center gap-2"
+              className="px-4 py-2 rounded-2xl text-gray-300 font-medium hover:bg-gradient-to-r hover:from-blue-900/30 hover:to-indigo-900/30 hover:text-blue-400 transition-all duration-200 flex items-center gap-2"
             >
         
               Inicio
             </Link>
             <Link 
               to="/capture" 
-              className="px-4 py-2 rounded-2xl text-slate-700 font-medium hover:bg-gradient-to-r hover:from-emerald-50 hover:to-teal-50 hover:text-emerald-600 transition-all duration-200 flex items-center gap-2"
+              className="px-4 py-2 rounded-2xl text-gray-300 font-medium hover:bg-gradient-to-r hover:from-emerald-900/30 hover:to-teal-900/30 hover:text-emerald-400 transition-all duration-200 flex items-center gap-2"
             >
              
               Captura
             </Link>
             <Link 
               to="/analysis" 
-              className="px-4 py-2 rounded-2xl text-slate-700 font-medium hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 hover:text-purple-600 transition-all duration-200 flex items-center gap-2"
+              className="px-4 py-2 rounded-2xl text-gray-300 font-medium hover:bg-gradient-to-r hover:from-purple-900/30 hover:to-pink-900/30 hover:text-purple-400 transition-all duration-200 flex items-center gap-2"
             >
             
               Análisis
@@ -49,7 +49,7 @@ const Navbar = () => {
           {/* Botón para menú móvil */}
           <div className="md:hidden">            <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="p-2 rounded-2xl bg-transparent backdrop-blur-sm border border-white/30 text-slate-700 hover:bg-gradient-to-r hover:from-slate-50 hover:to-slate-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="p-2 rounded-2xl bg-gray-800/50 backdrop-blur-sm border border-gray-600/50 text-gray-300 hover:bg-gradient-to-r hover:from-gray-700/50 hover:to-gray-600/50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
             >
               <svg
                 className="w-6 h-6"
@@ -78,10 +78,10 @@ const Navbar = () => {
           </div>
         </div>        {/* Menú móvil */}
         {isMenuOpen && (
-          <div className="pt-4 pb-2 md:hidden bg-transparent backdrop-blur-sm rounded-2xl mt-4 border border-white/30">
+          <div className="pt-4 pb-2 md:hidden bg-gray-800/80 backdrop-blur-sm rounded-2xl mt-4 border border-gray-600/50">
             <Link
               to="/"
-              className="flex items-center gap-2 px-4 py-3 text-slate-700 font-medium hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:text-blue-600 transition-all duration-200 rounded-2xl mx-2"
+              className="flex items-center gap-2 px-4 py-3 text-gray-300 font-medium hover:bg-gradient-to-r hover:from-blue-900/30 hover:to-indigo-900/30 hover:text-blue-400 transition-all duration-200 rounded-2xl mx-2"
               onClick={() => setIsMenuOpen(false)}
             >
               <span>🏠</span>
@@ -89,7 +89,7 @@ const Navbar = () => {
             </Link>
             <Link
               to="/capture"
-              className="flex items-center gap-2 px-4 py-3 text-slate-700 font-medium hover:bg-gradient-to-r hover:from-emerald-50 hover:to-teal-50 hover:text-emerald-600 transition-all duration-200 rounded-2xl mx-2"
+              className="flex items-center gap-2 px-4 py-3 text-gray-300 font-medium hover:bg-gradient-to-r hover:from-emerald-900/30 hover:to-teal-900/30 hover:text-emerald-400 transition-all duration-200 rounded-2xl mx-2"
               onClick={() => setIsMenuOpen(false)}
             >
               <span>📡</span>
@@ -97,7 +97,7 @@ const Navbar = () => {
             </Link>
             <Link
               to="/analysis"
-              className="flex items-center gap-2 px-4 py-3 text-slate-700 font-medium hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 hover:text-purple-600 transition-all duration-200 rounded-2xl mx-2"
+              className="flex items-center gap-2 px-4 py-3 text-gray-300 font-medium hover:bg-gradient-to-r hover:from-purple-900/30 hover:to-pink-900/30 hover:text-purple-400 transition-all duration-200 rounded-2xl mx-2"
               onClick={() => setIsMenuOpen(false)}
             >
               <span>📊</span>

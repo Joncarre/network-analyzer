@@ -88,29 +88,29 @@ function ChatInterface({ sessionId, dbFile }) {
     <div className="h-full flex flex-col">
       {/* Header con Asistente de IA */}
       <div className="mb-4 flex flex-wrap gap-2">
-        <span className="text-sm font-semibold text-slate-600 flex items-center">Modo de respuesta:</span>
-        <button type="button" className={`px-3 py-1 rounded-xl text-xs font-medium transition-all duration-500 focus:outline-none border ${userPreference==='corto' ? 'bg-gradient-to-r from-fuchsia-400 to-pink-400 text-white border-purple-500' : 'bg-white/80 text-slate-600 hover:bg-gradient-to-r hover:from-blue-100 hover:to-indigo-100 border-slate-200'}`} onClick={() => handleCommand('corto')}>corto</button>
-        <button type="button" className={`px-3 py-1 rounded-xl text-xs font-medium transition-all duration-500 focus:outline-none border ${userPreference==='normal' ? 'bg-gradient-to-r from-fuchsia-400 to-pink-400 text-white border-purple-500' : 'bg-white/80 text-slate-600 hover:bg-gradient-to-r hover:from-blue-100 hover:to-indigo-100 border-slate-200'}`} onClick={() => handleCommand('normal')}>normal</button>
-        <button type="button" className={`px-3 py-1 rounded-xl text-xs font-medium transition-all duration-500 focus:outline-none border ${userPreference==='detallado' ? 'bg-gradient-to-r from-fuchsia-400 to-pink-400 text-white border-purple-500' : 'bg-white/80 text-slate-600 hover:bg-gradient-to-r hover:from-blue-100 hover:to-indigo-100 border-slate-200'}`} onClick={() => handleCommand('detallado')}>detallado</button>
-        <button type="button" className="px-3 py-1 rounded-xl text-xs font-medium transition-all duration-500 bg-white/80 text-slate-600 hover:bg-gradient-to-r hover:from-orange-100 hover:to-amber-100 border border-slate-200 active:bg-gradient-to-r active:from-orange-300 active:to-amber-300 focus:outline-none" onClick={() => handleCommand('reiniciar')}>reiniciar</button>
-        <button type="button" className="px-3 py-1 rounded-xl text-xs font-medium transition-all duration-500 bg-white/80 text-slate-600 hover:bg-gradient-to-r hover:from-green-100 hover:to-emerald-100 border border-slate-200 active:bg-gradient-to-r active:from-green-300 active:to-emerald-300 focus:outline-none" onClick={() => handleCommand('historial')}>historial</button>
-        <button type="button" className="px-3 py-1 rounded-xl text-xs font-medium transition-all duration-500 bg-gradient-to-r from-red-400 to-rose-500 text-white hover:from-red-200 hover:to-rose-200 hover:text-slate-700 active:bg-gradient-to-r active:from-red-500 active:to-rose-600 active:text-white border border-red-400 focus:outline-none" onClick={() => handleCommand('borrar_historial')}>borrar historial</button>
+        <span className="text-sm font-semibold text-gray-400 flex items-center">Modo de respuesta:</span>
+        <button type="button" className={`px-3 py-1 rounded-xl text-xs font-medium transition-all duration-500 focus:outline-none border ${userPreference==='corto' ? 'bg-gradient-to-r from-fuchsia-400 to-pink-400 text-white border-purple-500' : 'bg-gray-700/80 text-gray-300 hover:bg-gradient-to-r hover:from-blue-800/50 hover:to-indigo-800/50 border-gray-600'}`} onClick={() => handleCommand('corto')}>corto</button>
+        <button type="button" className={`px-3 py-1 rounded-xl text-xs font-medium transition-all duration-500 focus:outline-none border ${userPreference==='normal' ? 'bg-gradient-to-r from-fuchsia-400 to-pink-400 text-white border-purple-500' : 'bg-gray-700/80 text-gray-300 hover:bg-gradient-to-r hover:from-blue-800/50 hover:to-indigo-800/50 border-gray-600'}`} onClick={() => handleCommand('normal')}>normal</button>
+        <button type="button" className={`px-3 py-1 rounded-xl text-xs font-medium transition-all duration-500 focus:outline-none border ${userPreference==='detallado' ? 'bg-gradient-to-r from-fuchsia-400 to-pink-400 text-white border-purple-500' : 'bg-gray-700/80 text-gray-300 hover:bg-gradient-to-r hover:from-blue-800/50 hover:to-indigo-800/50 border-gray-600'}`} onClick={() => handleCommand('detallado')}>detallado</button>
+        <button type="button" className="px-3 py-1 rounded-xl text-xs font-medium transition-all duration-500 bg-gray-700/80 text-gray-300 hover:bg-gradient-to-r hover:from-orange-800/50 hover:to-amber-800/50 border border-gray-600 active:bg-gradient-to-r active:from-orange-700/50 active:to-amber-700/50 focus:outline-none" onClick={() => handleCommand('reiniciar')}>reiniciar</button>
+        <button type="button" className="px-3 py-1 rounded-xl text-xs font-medium transition-all duration-500 bg-gray-700/80 text-gray-300 hover:bg-gradient-to-r hover:from-green-800/50 hover:to-emerald-800/50 border border-gray-600 active:bg-gradient-to-r active:from-green-700/50 active:to-emerald-700/50 focus:outline-none" onClick={() => handleCommand('historial')}>historial</button>
+        <button type="button" className="px-3 py-1 rounded-xl text-xs font-medium transition-all duration-500 bg-gradient-to-r from-red-400 to-rose-500 text-white hover:from-red-500 hover:to-rose-600 active:bg-gradient-to-r active:from-red-600 active:to-rose-700 active:text-white border border-red-500 focus:outline-none" onClick={() => handleCommand('borrar_historial')}>borrar historial</button>
       </div>
       
       {error && (
-        <div className="p-3 bg-gradient-to-r from-red-50 to-rose-50 border border-red-200 rounded-2xl shadow-sm mb-4">
-          <p className="text-red-600 font-medium">{error}</p>
+        <div className="p-3 bg-gradient-to-r from-red-900/50 to-rose-900/50 border border-red-700/50 rounded-2xl shadow-sm mb-4">
+          <p className="text-red-400 font-medium">{error}</p>
         </div>
       )}
         {/* Contenedor del chat que crece para ocupar el espacio disponible */}
-      <div className="h-100 overflow-y-auto bg-white/60 backdrop-blur-sm border border-white/30 rounded-2xl p-4 mb-4 shadow-inner min-h-0">
+      <div className="h-100 overflow-y-auto bg-gray-700/60 backdrop-blur-sm border border-gray-600/50 rounded-2xl p-4 mb-4 shadow-inner min-h-0">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="w-16 h-16 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mb-4">
+            <div className="w-16 h-16 bg-gradient-to-r from-blue-800/50 to-indigo-800/50 rounded-full flex items-center justify-center mb-4">
               <span className="text-2xl">💬</span>
             </div>
-            <p className="text-slate-500 font-medium">Inicia la conversación...</p>
-            <p className="text-slate-400 text-sm mt-1">Haz una pregunta sobre tus datos de red</p>
+            <p className="text-gray-400 font-medium">Inicia la conversación...</p>
+            <p className="text-gray-500 text-sm mt-1">Haz una pregunta sobre tus datos de red</p>
           </div>
         )}
         {messages.map((msg, index) => (
@@ -118,7 +118,7 @@ function ChatInterface({ sessionId, dbFile }) {
             <div className={`max-w-[80%] p-3 rounded-2xl shadow-sm ${
               msg.role === 'user' 
                 ? 'bg-gradient-to-r from-fuchsia-400 to-purple-300 text-white ml-auto' 
-                : 'bg-white/80 backdrop-blur-sm text-slate-700 border border-white/50'
+                : 'bg-gray-800/80 backdrop-blur-sm text-gray-300 border border-gray-600/50'
             }`}>
               <div className="flex items-start gap-2">
                 {msg.role === 'assistant' && (
@@ -142,7 +142,7 @@ function ChatInterface({ sessionId, dbFile }) {
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
           placeholder={sessionId ? `Pregunta sobre la sesión ${sessionId}...` : "Pregunta algo..."}
-          className="flex-1 p-4 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl text-slate-700 focus:ring-1 focus:ring-pink-500 focus:border-pink-400 transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 focus:outline-none"
+          className="flex-1 p-4 bg-gray-700/80 backdrop-blur-sm border border-gray-600 rounded-2xl text-gray-300 focus:ring-1 focus:ring-pink-500 focus:border-pink-400 transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 focus:outline-none"
           disabled={loading}
         />
         <button 
@@ -174,7 +174,7 @@ function ChatInterface({ sessionId, dbFile }) {
         systemMessage.content === 'No hay preguntas en el historial' ||
         systemMessage.content === 'Historial de preguntas del usuario borrado') && (
         <div className="flex justify-center mt-4">
-          <div className="px-4 py-2 rounded-2xl font-medium text-purple-700 bg-gradient-to-r from-purple-100 to-pink-100 border border-purple-200 shadow-sm text-sm">
+          <div className="px-4 py-2 rounded-2xl font-medium text-purple-300 bg-gradient-to-r from-purple-900/50 to-pink-900/50 border border-purple-700/50 shadow-sm text-sm">
             {systemMessage.content}
           </div>
         </div>

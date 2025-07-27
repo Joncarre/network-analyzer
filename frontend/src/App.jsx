@@ -7,7 +7,7 @@ import AnalysisPage from './pages/AnalysisPage'
 
 function App() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gray-900">
       <Navbar />
       <div className="container mx-auto px-4 py-8">
         <Routes>

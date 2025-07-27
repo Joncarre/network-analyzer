@@ -90,7 +90,7 @@ function AnomalyTable({ sessionId }) {
       case 'low':
         return 'bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700';
       default:
-        return 'bg-gradient-to-r from-slate-100 to-slate-200 text-slate-600';
+        return 'bg-gradient-to-r from-gray-600 to-gray-500 text-gray-300';
     }
   };
 
@@ -100,15 +100,15 @@ function AnomalyTable({ sessionId }) {
         <div className="w-10 h-10 bg-gradient-to-r from-red-400 to-rose-500 rounded-2xl flex items-center justify-center mr-3">
           <span className="text-white text-lg">⚠️</span>
         </div>
-        <h3 className="text-2xl font-bold text-slate-700">Anomalías Detectadas</h3>
+        <h3 className="text-2xl font-bold text-gray-300">Anomalías Detectadas</h3>
         <span className="ml-3 px-3 py-1 bg-gradient-to-r from-red-100 to-rose-100 text-red-700 rounded-xl text-sm font-semibold">
           {totalAnomalies} total
         </span>
       </div>
 
       {/* Controles de Filtro */}
-      <div className="bg-white/70 backdrop-blur-sm p-6 rounded-3xl shadow-lg border border-white/30 mb-6">
-        <h4 className="text-lg font-semibold text-slate-700 mb-4 flex items-center">
+      <div className="bg-gray-800/70 backdrop-blur-sm p-6 rounded-3xl shadow-lg border border-gray-700/50 mb-6">
+        <h4 className="text-lg font-semibold text-gray-300 mb-4 flex items-center">
           <span className="mr-2">🔍</span>
           Filtros de Anomalías
         </h4>
@@ -119,7 +119,7 @@ function AnomalyTable({ sessionId }) {
             value={inputFilters.severity}
             onChange={handleFilterChange}
             placeholder="Filtrar Severidad (High, Medium, Low)..."
-            className="p-3 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl text-slate-700 focus:ring-2 focus:ring-red-400 focus:border-red-400 transition-all duration-200 shadow-sm hover:shadow-md"
+            className="p-3 bg-gray-700/80 backdrop-blur-sm border border-gray-600 rounded-2xl text-gray-300 focus:ring-2 focus:ring-red-400 focus:border-red-400 transition-all duration-200 shadow-sm hover:shadow-md"
           />
           <input
             type="text"
@@ -127,7 +127,7 @@ function AnomalyTable({ sessionId }) {
             value={inputFilters.type}
             onChange={handleFilterChange}
             placeholder="Filtrar Tipo de Anomalía..."
-            className="p-3 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl text-slate-700 focus:ring-2 focus:ring-red-400 focus:border-red-400 transition-all duration-200 shadow-sm hover:shadow-md"
+            className="p-3 bg-gray-700/80 backdrop-blur-sm border border-gray-600 rounded-2xl text-gray-300 focus:ring-2 focus:ring-red-400 focus:border-red-400 transition-all duration-200 shadow-sm hover:shadow-md"
           />
         </div>
       </div>
@@ -138,14 +138,14 @@ function AnomalyTable({ sessionId }) {
             <div className="animate-spin w-8 h-8 bg-gradient-to-r from-red-400 to-rose-500 rounded-full flex items-center justify-center">
               <span className="text-white">⚙️</span>
             </div>
-            <p className="text-slate-600 font-medium">Cargando anomalías...</p>
+            <p className="text-gray-400 font-medium">Cargando anomalías...</p>
           </div>
         </div>
       )}
       
       {error && (
-        <div className="p-4 bg-gradient-to-r from-red-50 to-rose-50 border border-red-200 rounded-2xl shadow-sm mb-6">
-          <p className="text-red-600 font-medium">{error}</p>
+        <div className="p-4 bg-gradient-to-r from-red-900/50 to-red-800/50 border border-red-700/50 rounded-2xl shadow-sm mb-6">
+          <p className="text-red-300 font-medium">{error}</p>
         </div>
       )}      {!loading && !error && (
         <>
@@ -154,39 +154,39 @@ function AnomalyTable({ sessionId }) {
               <div className="w-24 h-24 bg-gradient-to-r from-green-100 to-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
                 <span className="text-4xl">✅</span>
               </div>
-              <h3 className="text-xl font-semibold text-slate-700 mb-2">¡Excelente! No hay anomalías</h3>
-              <p className="text-slate-500">No se encontraron anomalías para esta sesión o con los filtros aplicados</p>
+              <h3 className="text-xl font-semibold text-gray-300 mb-2">¡Excelente! No hay anomalías</h3>
+              <p className="text-gray-400">No se encontraron anomalías para esta sesión o con los filtros aplicados</p>
             </div>
           ) : (
-            <div className="bg-white/70 backdrop-blur-sm rounded-3xl shadow-lg border border-white/30 overflow-hidden">
+            <div className="bg-gray-800/70 backdrop-blur-sm rounded-3xl shadow-lg border border-gray-700/50 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="min-w-full">
-                  <thead className="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200">
+                  <thead className="bg-gradient-to-r from-gray-700/80 to-gray-600/80 border-b border-gray-600">
                     <tr>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Paquete #</th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Timestamp</th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Tipo</th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Descripción</th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Severidad</th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">IP Origen</th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">IP Destino</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Paquete #</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Timestamp</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Tipo</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Descripción</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Severidad</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">IP Origen</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">IP Destino</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-200">
+                  <tbody className="divide-y divide-gray-600">
                     {anomalies.map((anomaly, index) => (
-                      <tr key={anomaly.id} className="hover:bg-gradient-to-r hover:from-red-50 hover:to-rose-50 transition-all duration-200 group">
-                        <td className="px-6 py-4 text-sm text-slate-600 font-medium">
-                          <span className="bg-gradient-to-r from-slate-100 to-slate-200 text-slate-700 px-2 py-1 rounded-lg">
+                      <tr key={anomaly.id} className="hover:bg-gradient-to-r hover:from-gray-700/50 hover:to-gray-600/50 transition-all duration-200 group">
+                        <td className="px-6 py-4 text-sm text-gray-400 font-medium">
+                          <span className="bg-gradient-to-r from-gray-700 to-gray-600 text-gray-300 px-2 py-1 rounded-lg">
                             #{anomaly.packet?.id}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-sm text-slate-600 font-mono">{new Date(anomaly.packet?.timestamp * 1000).toISOString()}</td>
+                        <td className="px-6 py-4 text-sm text-gray-400 font-mono">{new Date(anomaly.packet?.timestamp * 1000).toISOString()}</td>
                         <td className="px-6 py-4 text-sm">
                           <span className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 px-3 py-1 rounded-xl font-semibold">
                             {anomaly.type}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-sm text-slate-700 max-w-xs">
+                        <td className="px-6 py-4 text-sm text-gray-300 max-w-xs">
                           <div className="truncate">{anomaly.description}</div>
                         </td>
                         <td className="px-6 py-4 text-sm">
@@ -194,12 +194,12 @@ function AnomalyTable({ sessionId }) {
                             {anomaly.severity || 'N/A'}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-sm text-slate-700 font-mono">
+                        <td className="px-6 py-4 text-sm text-gray-300 font-mono">
                           <span className="bg-gradient-to-r from-emerald-100 to-teal-100 text-emerald-700 px-2 py-1 rounded-lg">
                             {anomaly.packet?.src_ip}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-sm text-slate-700 font-mono">
+                        <td className="px-6 py-4 text-sm text-gray-300 font-mono">
                           <span className="bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 px-2 py-1 rounded-lg">
                             {anomaly.packet?.dst_ip}
                           </span>
@@ -215,14 +215,14 @@ function AnomalyTable({ sessionId }) {
           {/* Paginación */}
           {totalPages > 1 && (
             <div className="mt-6 flex justify-center">
-              <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-white/30 p-4">
+              <div className="bg-gray-800/70 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-700/50 p-4">
                 <div className="flex items-center space-x-4">
                   <button
                     onClick={handlePreviousPage}
                     disabled={currentPage === 0}
                     className={`px-4 py-2 rounded-xl font-semibold transition-all duration-200 ${
                       currentPage === 0
-                        ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                        ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
                         : 'bg-gradient-to-r from-red-400 to-rose-500 text-white hover:from-red-500 hover:to-rose-600 shadow-md hover:shadow-lg transform hover:-translate-y-0.5'
                     }`}
                   >
@@ -233,12 +233,12 @@ function AnomalyTable({ sessionId }) {
                   </button>
                   
                   <div className="flex items-center space-x-2">
-                    <span className="text-slate-600 font-medium">Página</span>
-                    <span className="px-3 py-1 bg-gradient-to-r from-slate-100 to-slate-200 text-slate-700 rounded-xl font-bold">
+                    <span className="text-gray-400 font-medium">Página</span>
+                    <span className="px-3 py-1 bg-gradient-to-r from-gray-700 to-gray-600 text-gray-300 rounded-xl font-bold">
                       {currentPage + 1}
                     </span>
-                    <span className="text-slate-600 font-medium">de</span>
-                    <span className="px-3 py-1 bg-gradient-to-r from-slate-100 to-slate-200 text-slate-700 rounded-xl font-bold">
+                    <span className="text-gray-400 font-medium">de</span>
+                    <span className="px-3 py-1 bg-gradient-to-r from-gray-700 to-gray-600 text-gray-300 rounded-xl font-bold">
                       {totalPages}
                     </span>
                   </div>
@@ -248,7 +248,7 @@ function AnomalyTable({ sessionId }) {
                     disabled={currentPage === totalPages - 1}
                     className={`px-4 py-2 rounded-xl font-semibold transition-all duration-200 ${
                       currentPage === totalPages - 1
-                        ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                        ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
                         : 'bg-gradient-to-r from-red-400 to-rose-500 text-white hover:from-red-500 hover:to-rose-600 shadow-md hover:shadow-lg transform hover:-translate-y-0.5'
                     }`}
                   >
