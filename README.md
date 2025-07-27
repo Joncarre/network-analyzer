@@ -30,7 +30,7 @@ Es en este último paso donde Network Analyzer se vuelve realmente útil. Cuando
 saber mediante técnicas de procesamiento de lenguaje natural. Finalmente, la IA genera una respuesta adaptada al nivel de detalle que el usuario desee: puede ser breve, normal o muy técnica. La respuesta no solo incluye datos concretos, sino también interpretaciones, explicaciones y recomendaciones. Se preserva el contexto de la conversación, por lo que es posible hacer preguntas encadenadas sin perder el hilo.
 
 <div align="center">
-    <img src="frontend/public/i4.png" alt="Análisis con IA" width="55%">
+    <img src="frontend/public/i4.png" alt="Análisis con IA" width="75%">
 </div>
 
 ---
